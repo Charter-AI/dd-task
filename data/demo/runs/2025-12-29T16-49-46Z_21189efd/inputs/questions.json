@@ -1,0 +1,321 @@
+[
+    {
+        "question_id": "Q_RESP_ID",
+        "label": "Respondent ID",
+        "type": "numeric"
+    },
+    {
+        "question_id": "Q_AGE",
+        "label": "What is your age?",
+        "type": "numeric"
+    },
+    {
+        "question_id": "Q_GENDER",
+        "label": "What is your gender?",
+        "type": "single_choice",
+        "options": [
+            {
+                "code": "M",
+                "label": "Male"
+            },
+            {
+                "code": "F",
+                "label": "Female"
+            },
+            {
+                "code": "NB",
+                "label": "Non-binary"
+            },
+            {
+                "code": "PNS",
+                "label": "Prefer not to say"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_REGION",
+        "label": "In which region do you live?",
+        "type": "single_choice",
+        "options": [
+            {
+                "code": "NORTH",
+                "label": "North"
+            },
+            {
+                "code": "SOUTH",
+                "label": "South"
+            },
+            {
+                "code": "EAST",
+                "label": "East"
+            },
+            {
+                "code": "WEST",
+                "label": "West"
+            },
+            {
+                "code": "CENTRAL",
+                "label": "Central"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_INCOME",
+        "label": "What is your annual household income?",
+        "type": "single_choice",
+        "options": [
+            {
+                "code": "LOW",
+                "label": "Under $30,000"
+            },
+            {
+                "code": "MED",
+                "label": "$30,000 - $75,000"
+            },
+            {
+                "code": "HIGH",
+                "label": "$75,000 - $150,000"
+            },
+            {
+                "code": "VHIGH",
+                "label": "Over $150,000"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_NPS",
+        "label": "How likely are you to recommend our product to a friend or colleague? (0-10)",
+        "type": "nps_0_10"
+    },
+    {
+        "question_id": "Q_OVERALL_SAT",
+        "label": "Overall, how satisfied are you with our product?",
+        "type": "likert_1_5",
+        "options": [
+            {
+                "code": 1,
+                "label": "Very Dissatisfied"
+            },
+            {
+                "code": 2,
+                "label": "Dissatisfied"
+            },
+            {
+                "code": 3,
+                "label": "Neutral"
+            },
+            {
+                "code": 4,
+                "label": "Satisfied"
+            },
+            {
+                "code": 5,
+                "label": "Very Satisfied"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_EASE_OF_USE",
+        "label": "How easy is the product to use?",
+        "type": "likert_1_5",
+        "options": [
+            {
+                "code": 1,
+                "label": "Very Difficult"
+            },
+            {
+                "code": 2,
+                "label": "Difficult"
+            },
+            {
+                "code": 3,
+                "label": "Neutral"
+            },
+            {
+                "code": 4,
+                "label": "Easy"
+            },
+            {
+                "code": 5,
+                "label": "Very Easy"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_VALUE",
+        "label": "How would you rate the value for money?",
+        "type": "likert_1_5",
+        "options": [
+            {
+                "code": 1,
+                "label": "Very Poor"
+            },
+            {
+                "code": 2,
+                "label": "Poor"
+            },
+            {
+                "code": 3,
+                "label": "Fair"
+            },
+            {
+                "code": 4,
+                "label": "Good"
+            },
+            {
+                "code": 5,
+                "label": "Excellent"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_SUPPORT_SAT",
+        "label": "How satisfied are you with our customer support?",
+        "type": "likert_1_5",
+        "options": [
+            {
+                "code": 1,
+                "label": "Very Dissatisfied"
+            },
+            {
+                "code": 2,
+                "label": "Dissatisfied"
+            },
+            {
+                "code": 3,
+                "label": "Neutral"
+            },
+            {
+                "code": 4,
+                "label": "Satisfied"
+            },
+            {
+                "code": 5,
+                "label": "Very Satisfied"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_FEATURES_USED",
+        "label": "Which features have you used? (Select all that apply)",
+        "type": "multi_choice",
+        "options": [
+            {
+                "code": "DASH",
+                "label": "Dashboard"
+            },
+            {
+                "code": "REPORT",
+                "label": "Reporting"
+            },
+            {
+                "code": "EXPORT",
+                "label": "Data Export"
+            },
+            {
+                "code": "API",
+                "label": "API Integration"
+            },
+            {
+                "code": "MOBILE",
+                "label": "Mobile App"
+            },
+            {
+                "code": "COLLAB",
+                "label": "Collaboration Tools"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_PURCHASE_INTENT",
+        "label": "How likely are you to purchase again?",
+        "type": "likert_1_5",
+        "options": [
+            {
+                "code": 1,
+                "label": "Very Unlikely"
+            },
+            {
+                "code": 2,
+                "label": "Unlikely"
+            },
+            {
+                "code": 3,
+                "label": "Neutral"
+            },
+            {
+                "code": 4,
+                "label": "Likely"
+            },
+            {
+                "code": 5,
+                "label": "Very Likely"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_USAGE_FREQ",
+        "label": "How often do you use the product?",
+        "type": "single_choice",
+        "options": [
+            {
+                "code": "DAILY",
+                "label": "Daily"
+            },
+            {
+                "code": "WEEKLY",
+                "label": "Weekly"
+            },
+            {
+                "code": "MONTHLY",
+                "label": "Monthly"
+            },
+            {
+                "code": "RARELY",
+                "label": "Rarely"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_TENURE",
+        "label": "How long have you been a customer?",
+        "type": "single_choice",
+        "options": [
+            {
+                "code": "NEW",
+                "label": "Less than 6 months"
+            },
+            {
+                "code": "MED",
+                "label": "6 months - 2 years"
+            },
+            {
+                "code": "LONG",
+                "label": "2+ years"
+            }
+        ]
+    },
+    {
+        "question_id": "Q_PLAN",
+        "label": "Which plan are you on?",
+        "type": "single_choice",
+        "options": [
+            {
+                "code": "FREE",
+                "label": "Free"
+            },
+            {
+                "code": "BASIC",
+                "label": "Basic"
+            },
+            {
+                "code": "PRO",
+                "label": "Professional"
+            },
+            {
+                "code": "ENT",
+                "label": "Enterprise"
+            }
+        ]
+    }
+]

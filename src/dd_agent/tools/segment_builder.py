@@ -92,7 +92,21 @@ class SegmentBuilder(Tool):
                 validation_errors = validate_segment_spec(segment_spec, questions_by_id)
                 
                 if validation_errors:
-                    return ToolOutput.failure(errors=validation_errors)
+                    # Convert validation errors to ToolMessage format
+                    tool_errors = []
+                    for error_item in validation_errors:
+                        if isinstance(error_item, dict):
+                            tool_errors.append(ToolMessage(
+                                code=error_item.get("code", "validation_error"),
+                                message=error_item.get("message", "Validation failed"),
+                                context=error_item.get("context", {})
+                            ))
+                        elif isinstance(error_item, ToolMessage):
+                            tool_errors.append(error_item)
+                        else:
+                            tool_errors.append(err("validation_error", str(error_item)))
+                    
+                    return ToolOutput.failure(errors=tool_errors)
                 
                 return ToolOutput.success(
                     data=segment_spec,
@@ -109,16 +123,29 @@ class SegmentBuilder(Tool):
             
             # 7. Process LLM response
             if not segment_plan.ok:
+                # Convert LLM errors to ToolMessage format
+                error_messages = []
+                for error_dict in segment_plan.errors:
+                    error_messages.append(ToolMessage(
+                        code=error_dict.get("code", "llm_error"),
+                        message=error_dict.get("message", "Unknown LLM error"),
+                        context=error_dict.get("context", {})
+                    ))
+                
                 return ToolOutput.failure(
-                    errors=[err("llm_failed", f"LLM failed to produce valid segment: {segment_plan.errors}")]
+                    errors=error_messages,
+                    trace={
+                        "prompt": ctx.prompt,
+                        "llm_response": segment_plan.model_dump(),
+                        "llm_trace": llm_trace
+                    }
                 )
             
             # 8. Check for ambiguity requiring user clarification
             if segment_plan.ambiguity_options and len(segment_plan.ambiguity_options) > 1:
-                return ToolOutput.partial(
-                    data=None,
-                    warnings=[warn("ambiguity_detected", 
-                                   f"Multiple interpretations found: {', '.join(segment_plan.ambiguity_options)}")],
+                return ToolOutput.partial_for_user_input(
+                    prompt=f"Your segment definition '{ctx.prompt}' could mean multiple things. Which one do you mean?",
+                    options=segment_plan.ambiguity_options,
                     trace={
                         "prompt": ctx.prompt,
                         "ambiguity_options": segment_plan.ambiguity_options,
@@ -141,8 +168,27 @@ class SegmentBuilder(Tool):
                 )
                 
                 if validation_errors:
+                    # Convert validation errors to ToolMessage format
+                    tool_errors = []
+                    for error_item in validation_errors:
+                        if isinstance(error_item, dict):
+                            tool_errors.append(ToolMessage(
+                                code=error_item.get("code", "validation_error"),
+                                message=error_item.get("message", "Validation failed"),
+                                context=error_item.get("context", {})
+                            ))
+                        elif isinstance(error_item, ToolMessage):
+                            tool_errors.append(error_item)
+                        else:
+                            tool_errors.append(err("validation_error", str(error_item)))
+                    
                     return ToolOutput.failure(
-                        errors=validation_errors
+                        errors=tool_errors,
+                        trace={
+                            "prompt": ctx.prompt,
+                            "validation_errors": validation_errors,
+                            "llm_trace": llm_trace
+                        }
                     )
                 
                 return ToolOutput.success(
@@ -180,6 +226,7 @@ class SegmentBuilder(Tool):
                 # Handle numeric option codes
                 option_strings = []
                 for opt in q.options:
+                    # Ensure we show both code and label properly
                     option_strings.append(f"'{opt.code}': '{opt.label}'")
                 options_str = ", ".join(option_strings)
                 question_desc += f", Options: {{{options_str}}}"
@@ -216,7 +263,7 @@ You can create these filter types:
 - Use PredicateEq/PredicateIn for single_choice questions
 - Use PredicateContainsAny for multi_choice questions  
 - Use PredicateRange for numeric/nps/likert questions
-- Ensure values match question option codes
+- Ensure values match question option codes exactly (as strings if codes are numeric)
 
 ## 3. Output Format
 You must return a SegmentPlanResult object with this exact structure:
@@ -274,7 +321,10 @@ Response: {{
             "kind": "and",
             "children": [
                 {{"kind": "in", "question_id": "Q_INCOME", "values": ["HIGH", "VHIGH"]}},
-                {{"kind": "in", "question_id": "Q_REGION", "values": ["NORTH", "SOUTH"]}}
+                {{"kind": "or", "children": [
+                    {{"kind": "eq", "question_id": "Q_REGION", "value": "NORTH"}},
+                    {{"kind": "eq", "question_id": "Q_REGION", "value": "SOUTH"}}
+                ]}}
             ]
         }},
         "intended_partition": false,

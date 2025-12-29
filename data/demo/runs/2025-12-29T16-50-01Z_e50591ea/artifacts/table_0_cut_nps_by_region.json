@@ -1,0 +1,32 @@
+{
+  "cut_id": "cut_nps_by_region",
+  "metric_type": "nps",
+  "question_id": "Q_NPS",
+  "result_data": {
+    "by_dimension": {
+      "CENTRAL": 25.0,
+      "EAST": 16.67,
+      "NORTH": 33.33,
+      "SOUTH": 16.67,
+      "WEST": -16.67
+    },
+    "base_sizes": {
+      "CENTRAL": 12,
+      "EAST": 12,
+      "NORTH": 12,
+      "SOUTH": 12,
+      "WEST": 12
+    }
+  },
+  "base_n": 60,
+  "dimensions": [
+    "question:Q_REGION"
+  ],
+  "warnings": [
+    "[CENTRAL] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[EAST] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[NORTH] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[SOUTH] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[WEST] Base size (12) is below minimum threshold (30). Results may not be statistically reliable."
+  ]
+}

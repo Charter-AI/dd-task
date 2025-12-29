@@ -1,0 +1,73 @@
+{
+  "cut_id": "cut_at_risk_customers",
+  "metric_type": "frequency",
+  "question_id": "Q_NPS",
+  "result_data": {
+    "by_dimension": {
+      "at_risk_customers": [
+        {
+          "value": 3,
+          "label": "3",
+          "count": 1,
+          "percentage": 7.69
+        },
+        {
+          "value": 4,
+          "label": "4",
+          "count": 3,
+          "percentage": 23.08
+        },
+        {
+          "value": 5,
+          "label": "5",
+          "count": 3,
+          "percentage": 23.08
+        },
+        {
+          "value": 6,
+          "label": "6",
+          "count": 6,
+          "percentage": 46.15
+        }
+      ],
+      "not_at_risk_customers": [
+        {
+          "value": 7,
+          "label": "7",
+          "count": 10,
+          "percentage": 21.28
+        },
+        {
+          "value": 8,
+          "label": "8",
+          "count": 15,
+          "percentage": 31.91
+        },
+        {
+          "value": 9,
+          "label": "9",
+          "count": 15,
+          "percentage": 31.91
+        },
+        {
+          "value": 10,
+          "label": "10",
+          "count": 7,
+          "percentage": 14.89
+        }
+      ]
+    },
+    "base_sizes": {
+      "at_risk_customers": 13,
+      "not_at_risk_customers": 47
+    }
+  },
+  "base_n": 60,
+  "dimensions": [
+    "segment:at_risk_customers"
+  ],
+  "warnings": [
+    "[at_risk_customers] Base size (13) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[not_at_risk_customers] Base size (47) is below recommended threshold (100). Interpret results with caution."
+  ]
+}

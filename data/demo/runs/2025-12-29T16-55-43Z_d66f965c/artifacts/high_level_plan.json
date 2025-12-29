@@ -1,0 +1,200 @@
+{
+  "intents": [
+    {
+      "intent_id": "intent_001",
+      "description": "Analyze NPS by region to understand regional satisfaction differences",
+      "segments_needed": [
+        "regions"
+      ],
+      "priority": 1
+    },
+    {
+      "intent_id": "intent_002",
+      "description": "Compare overall satisfaction across different subscription plans to identify which plans yield higher satisfaction",
+      "segments_needed": [
+        "subscription_plans"
+      ],
+      "priority": 1
+    },
+    {
+      "intent_id": "intent_003",
+      "description": "Analyze correlation between feature usage and overall satisfaction to identify features that drive satisfaction",
+      "segments_needed": [
+        "feature_users"
+      ],
+      "priority": 2
+    },
+    {
+      "intent_id": "intent_004",
+      "description": "Segment customers by tenure and analyze NPS to understand loyalty and satisfaction trends",
+      "segments_needed": [
+        "tenure_groups"
+      ],
+      "priority": 2
+    },
+    {
+      "intent_id": "intent_005",
+      "description": "Identify at-risk customers by analyzing low NPS and low purchase intent scores",
+      "segments_needed": [
+        "at_risk_customers"
+      ],
+      "priority": 1
+    }
+  ],
+  "rationale": "This analysis plan aims to provide a comprehensive understanding of customer satisfaction across various segments, identify key drivers of satisfaction and dissatisfaction, and assess retention risks. By analyzing NPS scores, satisfaction levels, feature usage, and demographic patterns, we can uncover actionable insights to improve product offerings and customer experience. The plan focuses on segmentation to identify underperforming areas and high-value customer groups, enabling targeted interventions and strategic decisions for product development and marketing.",
+  "suggested_segments": [
+    {
+      "segment_id": "promoters",
+      "name": "Promoters",
+      "definition": {
+        "kind": "range",
+        "question_id": "Q_NPS",
+        "min": 9,
+        "max": 10,
+        "inclusive": true
+      },
+      "intended_partition": false,
+      "notes": "Customers who are highly likely to recommend (NPS 9-10)"
+    },
+    {
+      "segment_id": "detractors",
+      "name": "Detractors",
+      "definition": {
+        "kind": "range",
+        "question_id": "Q_NPS",
+        "min": 0,
+        "max": 6,
+        "inclusive": true
+      },
+      "intended_partition": false,
+      "notes": "Customers who are unlikely to recommend (NPS 0-6)"
+    },
+    {
+      "segment_id": "enterprise_customers",
+      "name": "Enterprise Customers",
+      "definition": {
+        "kind": "eq",
+        "question_id": "Q_PLAN",
+        "value": "ENT"
+      },
+      "intended_partition": false,
+      "notes": "Customers on the Enterprise plan"
+    },
+    {
+      "segment_id": "high_income_customers",
+      "name": "High Income Customers",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_INCOME",
+        "values": [
+          "HIGH",
+          "VHIGH"
+        ]
+      },
+      "intended_partition": false,
+      "notes": "Customers with household income over $75,000"
+    },
+    {
+      "segment_id": "long_term_customers",
+      "name": "Long-term Customers",
+      "definition": {
+        "kind": "eq",
+        "question_id": "Q_TENURE",
+        "value": "LONG"
+      },
+      "intended_partition": false,
+      "notes": "Customers with tenure of 2+ years"
+    },
+    {
+      "segment_id": "regions",
+      "name": "Regions",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_REGION",
+        "values": [
+          "NORTH",
+          "SOUTH",
+          "EAST",
+          "WEST",
+          "CENTRAL"
+        ]
+      },
+      "intended_partition": true,
+      "notes": "Geographic regions for regional analysis"
+    },
+    {
+      "segment_id": "subscription_plans",
+      "name": "Subscription Plans",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_PLAN",
+        "values": [
+          "FREE",
+          "BASIC",
+          "PRO",
+          "ENT"
+        ]
+      },
+      "intended_partition": true,
+      "notes": "Different subscription plans for tier analysis"
+    },
+    {
+      "segment_id": "feature_users",
+      "name": "Feature Users",
+      "definition": {
+        "kind": "contains_any",
+        "question_id": "Q_FEATURES_USED",
+        "values": [
+          "DASH",
+          "REPORT",
+          "EXPORT",
+          "API",
+          "MOBILE",
+          "COLLAB"
+        ]
+      },
+      "intended_partition": false,
+      "notes": "Customers using various product features"
+    },
+    {
+      "segment_id": "tenure_groups",
+      "name": "Tenure Groups",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_TENURE",
+        "values": [
+          "NEW",
+          "MED",
+          "LONG"
+        ]
+      },
+      "intended_partition": true,
+      "notes": "Customer tenure groups for loyalty analysis"
+    },
+    {
+      "segment_id": "at_risk_customers",
+      "name": "At-risk Customers",
+      "definition": {
+        "kind": "and",
+        "children": [
+          {
+            "kind": "range",
+            "question_id": "Q_NPS",
+            "min": 0,
+            "max": 6,
+            "inclusive": true
+          },
+          {
+            "kind": "range",
+            "question_id": "Q_PURCHASE_INTENT",
+            "min": 1,
+            "max": 2,
+            "inclusive": true
+          }
+        ]
+      },
+      "intended_partition": false,
+      "notes": "Customers with low NPS and low purchase intent scores"
+    }
+  ]
+}

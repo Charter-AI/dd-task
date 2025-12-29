@@ -129,3 +129,28 @@ Fix: Added type checking and proper conversion for all error sources
 - Consistent segment dimension comparisons
 
 **Testing**: Verified with queries like "Show NPS for Enterprise segment by region" where segments, filters, and dimensions interact.
+
+### SegmentBuilder Error Handling and Example Issues
+**Location**: `src/dd_agent/tools/segment_builder.py`
+
+**Problems Fixed**:
+1. **Missing Error Format Conversion**: Validation and LLM errors weren't converted to ToolMessage format
+2. **Incorrect Ambiguity Resolution**: Used wrong ToolOutput method for user interaction
+3. **Flawed System Prompt Examples**: Example filter expressions had incorrect structure
+4. **Inconsistent Error Handling**: Different from CutPlanner's approach
+
+**Root Causes**: The SegmentBuilder didn't follow the same error handling patterns as CutPlanner, causing inconsistent behavior. System prompt examples also contained syntax errors.
+
+**Fix Applied**:
+- Added comprehensive error conversion for both validation and LLM errors
+- Changed to `ToolOutput.partial_for_user_input()` for ambiguity resolution
+- Fixed filter expression examples in system prompt
+- Ensured consistent error handling across all tools
+
+**Impact**:
+- Consistent error handling with other tools
+- Proper ambiguity resolution with user interaction
+- Correct filter expression generation by LLM
+- Better debugging with error context preservation
+
+**Testing**: Verified by creating segments like "High income users from North or South regions" to ensure proper AND/OR filter generation.

@@ -1,0 +1,22 @@
+{
+  "cut_id": "cut_nps_by_tenure",
+  "metric_type": "nps",
+  "question_id": "Q_NPS",
+  "result_data": {
+    "by_dimension": {
+      "tenure_groups": 15.0,
+      "not_tenure_groups": null
+    },
+    "base_sizes": {
+      "tenure_groups": 60,
+      "not_tenure_groups": 0
+    }
+  },
+  "base_n": 60,
+  "dimensions": [
+    "segment:tenure_groups"
+  ],
+  "warnings": [
+    "[tenure_groups] Base size (60) is below recommended threshold (100). Interpret results with caution."
+  ]
+}

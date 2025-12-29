@@ -1,0 +1,132 @@
+{
+  "intents": [
+    {
+      "intent_id": "intent_001",
+      "description": "Analyze NPS by region to understand regional satisfaction differences",
+      "segments_needed": [],
+      "priority": 1
+    },
+    {
+      "intent_id": "intent_002",
+      "description": "Compare satisfaction across subscription plans to identify if enterprise customers are more satisfied than free/basic users",
+      "segments_needed": [
+        "enterprise_customers",
+        "free_basic_customers"
+      ],
+      "priority": 1
+    },
+    {
+      "intent_id": "intent_003",
+      "description": "Analyze correlation between feature usage and satisfaction to identify which features drive the highest satisfaction",
+      "segments_needed": [],
+      "priority": 2
+    },
+    {
+      "intent_id": "intent_004",
+      "description": "Segment customers by tenure and analyze NPS to understand satisfaction profiles of long-term vs new customers",
+      "segments_needed": [
+        "long_term_customers",
+        "new_customers"
+      ],
+      "priority": 2
+    },
+    {
+      "intent_id": "intent_005",
+      "description": "Identify at-risk customers with low NPS and low purchase intent to assess retention risk",
+      "segments_needed": [
+        "detractors",
+        "low_purchase_intent_customers"
+      ],
+      "priority": 1
+    }
+  ],
+  "rationale": "This analysis plan aims to provide a comprehensive understanding of customer satisfaction with our SaaS analytics platform. By analyzing various aspects such as NPS, satisfaction levels, feature usage, and demographic segments, we can identify key drivers of satisfaction and dissatisfaction. This will help us make informed decisions to improve product features, target underperforming segments, and enhance customer retention strategies. The insights gained will support strategic planning for product development and customer engagement, ultimately driving business growth.",
+  "suggested_segments": [
+    {
+      "segment_id": "promoters",
+      "name": "Promoters",
+      "definition": {
+        "kind": "range",
+        "question_id": "Q_NPS",
+        "min": 9,
+        "max": 10,
+        "inclusive": true
+      },
+      "intended_partition": false,
+      "notes": "Customers who are highly likely to recommend (NPS 9-10)"
+    },
+    {
+      "segment_id": "detractors",
+      "name": "Detractors",
+      "definition": {
+        "kind": "range",
+        "question_id": "Q_NPS",
+        "min": 0,
+        "max": 6,
+        "inclusive": true
+      },
+      "intended_partition": false,
+      "notes": "Customers who are unlikely to recommend (NPS 0-6)"
+    },
+    {
+      "segment_id": "enterprise_customers",
+      "name": "Enterprise Customers",
+      "definition": {
+        "kind": "eq",
+        "question_id": "Q_PLAN",
+        "value": "ENT"
+      },
+      "intended_partition": false,
+      "notes": "Customers on the Enterprise plan"
+    },
+    {
+      "segment_id": "free_basic_customers",
+      "name": "Free/Basic Customers",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_PLAN",
+        "values": [
+          "FREE",
+          "BASIC"
+        ]
+      },
+      "intended_partition": false,
+      "notes": "Customers on Free or Basic plans"
+    },
+    {
+      "segment_id": "long_term_customers",
+      "name": "Long-term Customers",
+      "definition": {
+        "kind": "eq",
+        "question_id": "Q_TENURE",
+        "value": "LONG"
+      },
+      "intended_partition": false,
+      "notes": "Customers with tenure of 2+ years"
+    },
+    {
+      "segment_id": "new_customers",
+      "name": "New Customers",
+      "definition": {
+        "kind": "eq",
+        "question_id": "Q_TENURE",
+        "value": "NEW"
+      },
+      "intended_partition": false,
+      "notes": "Customers with tenure less than 6 months"
+    },
+    {
+      "segment_id": "low_purchase_intent_customers",
+      "name": "Low Purchase Intent Customers",
+      "definition": {
+        "kind": "range",
+        "question_id": "Q_PURCHASE_INTENT",
+        "min": 1,
+        "max": 2,
+        "inclusive": true
+      },
+      "intended_partition": false,
+      "notes": "Customers unlikely to purchase again (Purchase Intent 1-2)"
+    }
+  ]
+}
