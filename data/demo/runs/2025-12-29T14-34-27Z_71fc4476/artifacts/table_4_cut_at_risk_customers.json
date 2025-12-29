@@ -1,0 +1,55 @@
+{
+  "cut_id": "cut_at_risk_customers",
+  "metric_type": "frequency",
+  "question_id": "Q_NPS",
+  "result_data": {
+    "by_dimension": {
+      "low_purchase_intent": [
+        {
+          "value": 3,
+          "label": "3",
+          "count": 1,
+          "percentage": 20.0
+        },
+        {
+          "value": 4,
+          "label": "4",
+          "count": 3,
+          "percentage": 60.0
+        },
+        {
+          "value": 5,
+          "label": "5",
+          "count": 1,
+          "percentage": 20.0
+        }
+      ],
+      "not_low_purchase_intent": [
+        {
+          "value": 5,
+          "label": "5",
+          "count": 2,
+          "percentage": 25.0
+        },
+        {
+          "value": 6,
+          "label": "6",
+          "count": 6,
+          "percentage": 75.0
+        }
+      ]
+    },
+    "base_sizes": {
+      "low_purchase_intent": 5,
+      "not_low_purchase_intent": 8
+    }
+  },
+  "base_n": 13,
+  "dimensions": [
+    "segment:low_purchase_intent"
+  ],
+  "warnings": [
+    "[low_purchase_intent] Base size (5) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[not_low_purchase_intent] Base size (8) is below minimum threshold (30). Results may not be statistically reliable."
+  ]
+}

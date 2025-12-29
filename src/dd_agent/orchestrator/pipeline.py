@@ -2,6 +2,7 @@
 
 import json
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -115,19 +116,46 @@ class Pipeline:
         """
         # 1. Initialize RunStore
         run_store = RunStore(self.runs_dir)
-        run_id = run_store.create_run(prompt)
-        run_dir = run_store.get_run_dir(run_id)
+        run_id = run_store.new_run(prompt)  # FIXED: new_run() not create_run()
+        run_dir = run_store.run_dir  # FIXED: Use run_store.run_dir
         
         logger.info(f"Starting run {run_id} with prompt: {prompt}")
 
         try:
-            # 2. Plan the cut via agent
+            # 2. Save input files
+            run_store.save_input("questions.json", self.data_dir / "questions.json")
+            run_store.save_input("responses.csv", self.data_dir / "responses.csv")
+            if self.scope:
+                run_store.save_input_text("scope.md", self.scope)
+            
+            # 3. Compute dataset hash
+            run_store.compute_dataset_hash(
+                self.data_dir / "questions.json",
+                self.data_dir / "responses.csv",
+                self.data_dir / "scope.md" if (self.data_dir / "scope.md").exists() else None
+            )
+            
+            # 4. Plan the cut via agent
             logger.info(f"Planning cut for: {prompt}")
             cut_result = self.agent.plan_cut(prompt)
             
             if not cut_result.ok:
                 errors = [str(e) for e in cut_result.errors]
                 logger.error(f"Cut planning failed: {errors}")
+                
+                # Save failure result
+                if save_run:
+                    run_store.save_artifact("cut_planning_error.json", {
+                        "prompt": prompt,
+                        "errors": errors,
+                        "timestamp": datetime.now().isoformat()
+                    })
+                    run_store.save_report(PipelineResult(
+                        success=False,
+                        run_id=run_id,
+                        run_dir=run_dir,
+                        errors=errors
+                    ))
                 
                 return PipelineResult(
                     success=False,
@@ -139,52 +167,37 @@ class Pipeline:
             cut_spec = cut_result.data
             logger.info(f"Cut planned successfully: {cut_spec.cut_id}")
 
-            # 3. Execute the cut
+            # 5. Execute the cut
             logger.info(f"Executing cut: {cut_spec.cut_id}")
             execution_result = self.agent.execute_single_cut(cut_spec)
             
-            # 4. Save artifacts and generate report
+            # 6. Save artifacts and generate report
             if save_run:
-                # Save input prompt
-                run_store.save_artifact(run_id, "user_prompt.txt", prompt)
-                
                 # Save cut specification
-                run_store.save_artifact(
-                    run_id, 
-                    "cut_spec.json", 
-                    json.dumps(cut_spec.model_dump(), indent=2)
-                )
+                run_store.save_artifact("cut_spec.json", cut_spec)
                 
                 # Save execution results
-                if execution_result.tables:
-                    # Save each table
-                    for i, table in enumerate(execution_result.tables):
-                        table_filename = f"table_{i}_{cut_spec.cut_id}.json"
-                        run_store.save_artifact(
-                            run_id,
-                            table_filename,
-                            json.dumps(table.model_dump(), indent=2)
-                        )
-                        
-                        # Also save as CSV for easy viewing
-                        if hasattr(table, 'df') and table.df is not None:
-                            csv_filename = f"table_{i}_{cut_spec.cut_id}.csv"
-                            table.df.to_csv(run_dir / csv_filename, index=False)
+                run_store.save_artifact("execution_result.json", execution_result)
                 
-                # Save execution summary
-                run_store.save_artifact(
-                    run_id,
-                    "execution_summary.json",
-                    json.dumps({
-                        "cut_id": cut_spec.cut_id,
-                        "tables_count": len(execution_result.tables),
-                        "errors": execution_result.errors,
-                        "segments_computed": execution_result.segments_computed
-                    }, indent=2)
-                )
+                # Save individual tables as separate files
+                for i, table in enumerate(execution_result.tables):
+                    table_filename = f"table_{i}_{cut_spec.cut_id}.json"
+                    run_store.save_artifact(table_filename, table)
+                    
+                    # Also save as CSV if dataframe exists
+                    if hasattr(table, 'df') and table.df is not None:
+                        csv_filename = f"table_{i}_{cut_spec.cut_id}.csv"
+                        table.df.to_csv(run_dir / "artifacts" / csv_filename, index=False)
                 
                 # Generate report
-                run_store.generate_report(run_id, execution_result)
+                pipeline_result = PipelineResult(
+                    success=True,
+                    run_id=run_id,
+                    run_dir=run_dir,
+                    cuts_planned=[cut_spec],
+                    execution_result=execution_result
+                )
+                run_store.save_report(pipeline_result)
                 
                 logger.info(f"Artifacts saved to: {run_dir}")
 
@@ -198,6 +211,13 @@ class Pipeline:
             
         except Exception as e:
             logger.error(f"Pipeline execution failed: {str(e)}")
+            
+            # Save error to artifacts
+            if save_run and 'run_store' in locals():
+                run_store.save_artifact("pipeline_error.json", {
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat()
+                })
             
             return PipelineResult(
                 success=False,
@@ -220,17 +240,198 @@ class Pipeline:
         Returns:
             PipelineResult with execution details
         """
-        # TODO: Implement the autoplan pipeline
         # 1. Initialize RunStore
-        # 2. Generate high-level plan via agent
-        # 3. For each intent, plan a cut
-        # 4. Execute all planned cuts
-        # 5. Save all artifacts and generate report
+        run_store = RunStore(self.runs_dir)
+        run_id = run_store.new_run("Auto-plan: Comprehensive analysis")
+        run_dir = run_store.run_dir
         
-        # For now, return a simple implementation
-        logger.warning("Auto-plan not fully implemented, running single prompt instead")
-        
-        # Use a default prompt for autoplan
-        default_prompt = "Show key metrics and trends from the survey data"
-        
-        return self.run_single(default_prompt, save_run)
+        logger.info(f"Starting autoplan run {run_id}")
+
+        try:
+            # 2. Save input files
+            run_store.save_input("questions.json", self.data_dir / "questions.json")
+            run_store.save_input("responses.csv", self.data_dir / "responses.csv")
+            if self.scope:
+                run_store.save_input_text("scope.md", self.scope)
+            
+            # 3. Compute dataset hash
+            run_store.compute_dataset_hash(
+                self.data_dir / "questions.json",
+                self.data_dir / "responses.csv",
+                self.data_dir / "scope.md" if (self.data_dir / "scope.md").exists() else None
+            )
+            
+            # 4. Generate high-level plan via agent
+            logger.info("Generating high-level analysis plan")
+            plan_result = self.agent.plan_analysis()
+            
+            if not plan_result.ok:
+                errors = [str(e) for e in plan_result.errors]
+                logger.error(f"High-level planning failed: {errors}")
+                
+                if save_run:
+                    run_store.save_artifact("planning_error.json", {
+                        "errors": errors,
+                        "timestamp": datetime.now().isoformat()
+                    })
+                    run_store.save_report(PipelineResult(
+                        success=False,
+                        run_id=run_id,
+                        run_dir=run_dir,
+                        errors=errors
+                    ))
+                
+                return PipelineResult(
+                    success=False,
+                    run_id=run_id,
+                    run_dir=run_dir,
+                    errors=errors
+                )
+            
+            high_level_plan = plan_result.data
+            logger.info(f"High-level plan generated with {len(high_level_plan.intents)} intents")
+            
+            # 5. Add suggested segments to agent
+            if hasattr(high_level_plan, 'suggested_segments') and high_level_plan.suggested_segments:
+                for segment in high_level_plan.suggested_segments:
+                    self.agent.add_segment(segment)
+                    logger.info(f"Added suggested segment: {segment.name}")
+            
+            # 6. Plan and execute cuts for each intent
+            all_cuts_planned = []
+            all_cuts_failed = []
+            all_execution_results = []
+            
+            # Sort intents by priority
+            sorted_intents = sorted(
+                high_level_plan.intents,
+                key=lambda x: {"high": 0, "medium": 1, "low": 2}.get(x.priority, 3)
+            )
+            
+            # Limit to max_cuts
+            intents_to_process = sorted_intents[:max_cuts]
+            
+            for i, intent in enumerate(intents_to_process):
+                logger.info(f"Processing intent {i+1}/{len(intents_to_process)}: {intent.description}")
+                
+                try:
+                    # Plan cut from intent description
+                    cut_result = self.agent.plan_cut(intent.description)
+                    
+                    if cut_result.ok:
+                        cut_spec = cut_result.data
+                        all_cuts_planned.append(cut_spec)
+                        
+                        # Execute the cut
+                        exec_result = self.agent.execute_single_cut(cut_spec)
+                        all_execution_results.append(exec_result)
+                        
+                        logger.info(f"✓ Executed cut: {cut_spec.cut_id}")
+                    else:
+                        failed_cut = {
+                            "intent_id": getattr(intent, 'intent_id', f"intent_{i}"),
+                            "description": intent.description,
+                            "errors": [str(e) for e in cut_result.errors]
+                        }
+                        all_cuts_failed.append(failed_cut)
+                        logger.warning(f"✗ Failed to plan cut for intent: {intent.description}")
+                        
+                except Exception as e:
+                    failed_cut = {
+                        "intent_id": getattr(intent, 'intent_id', f"intent_{i}"),
+                        "description": intent.description,
+                        "error": str(e)
+                    }
+                    all_cuts_failed.append(failed_cut)
+                    logger.error(f"Error processing intent: {e}")
+            
+            # 7. Combine all execution results
+            combined_tables = []
+            combined_errors = []
+            segments_computed = {}
+            
+            for result in all_execution_results:
+                combined_tables.extend(result.tables)
+                combined_errors.extend(result.errors)
+                if result.segments_computed:
+                    segments_computed.update(result.segments_computed)
+            
+            combined_execution_result = ExecutionResult(
+                tables=combined_tables,
+                errors=combined_errors,
+                segments_computed=segments_computed
+            )
+            
+            # 8. Save artifacts and generate report
+            if save_run:
+                # Save high-level plan
+                run_store.save_artifact("high_level_plan.json", high_level_plan)
+                
+                # Save all cut specifications
+                run_store.save_artifact("all_cuts.json", all_cuts_planned)
+                
+                # Save failed cuts
+                if all_cuts_failed:
+                    run_store.save_artifact("failed_cuts.json", all_cuts_failed)
+                
+                # Save execution summary
+                run_store.save_artifact("execution_summary.json", {
+                    "total_intents": len(high_level_plan.intents),
+                    "intents_processed": len(intents_to_process),
+                    "cuts_planned": len(all_cuts_planned),
+                    "cuts_failed": len(all_cuts_failed),
+                    "tables_generated": len(combined_execution_result.tables),
+                    "errors_encountered": len(combined_execution_result.errors)
+                })
+                
+                # Save each table
+                for i, table in enumerate(combined_execution_result.tables):
+                    table_filename = f"table_{i}_{table.cut_id}.json"
+                    run_store.save_artifact(table_filename, table)
+                    
+                    # Also save as CSV
+                    if hasattr(table, 'df') and table.df is not None:
+                        csv_filename = f"table_{i}_{table.cut_id}.csv"
+                        table.df.to_csv(run_dir / "artifacts" / csv_filename, index=False)
+                
+                # Generate comprehensive report
+                pipeline_result = PipelineResult(
+                    success=len(all_cuts_planned) > 0,
+                    run_id=run_id,
+                    run_dir=run_dir,
+                    plan=high_level_plan,
+                    cuts_planned=all_cuts_planned,
+                    cuts_failed=all_cuts_failed,
+                    execution_result=combined_execution_result,
+                    errors=[] if len(all_cuts_planned) > 0 else ["No cuts were successfully executed"]
+                )
+                run_store.save_report(pipeline_result)
+                
+                logger.info(f"Autoplan complete. Artifacts saved to: {run_dir}")
+            
+            return PipelineResult(
+                success=len(all_cuts_planned) > 0,
+                run_id=run_id,
+                run_dir=run_dir,
+                plan=high_level_plan,
+                cuts_planned=all_cuts_planned,
+                cuts_failed=all_cuts_failed,
+                execution_result=combined_execution_result,
+                errors=[] if len(all_cuts_planned) > 0 else ["No cuts were successfully executed"]
+            )
+            
+        except Exception as e:
+            logger.error(f"Autoplan pipeline failed: {str(e)}")
+            
+            if save_run and 'run_store' in locals():
+                run_store.save_artifact("autoplan_error.json", {
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat()
+                })
+            
+            return PipelineResult(
+                success=False,
+                run_id=run_id,
+                run_dir=run_dir,
+                errors=[str(e)]
+            )

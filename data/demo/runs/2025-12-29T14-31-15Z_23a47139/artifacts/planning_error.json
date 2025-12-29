@@ -1,0 +1,6 @@
+{
+  "errors": [
+    "code='unexpected_error' message=\"Unexpected error: 1 validation error for HighLevelPlanResult\\nplan.rationale\\n  Field required [type=missing, input_value={'objectives': ['Understa...ded_partition': False}]}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/missing\" context={}"
+  ],
+  "timestamp": "2025-12-29T22:31:22.923439"
+}

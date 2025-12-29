@@ -1,0 +1,23 @@
+{
+  "cut_id": "cut_low_nps_low_purchase_intent",
+  "metric_type": "frequency",
+  "question_id": "Q_NPS",
+  "result_data": {
+    "by_dimension": {
+      "low_purchase_intent_customers": [],
+      "not_low_purchase_intent_customers": []
+    },
+    "base_sizes": {
+      "low_purchase_intent_customers": 0,
+      "not_low_purchase_intent_customers": 0
+    }
+  },
+  "base_n": 0,
+  "dimensions": [
+    "segment:low_purchase_intent_customers"
+  ],
+  "warnings": [
+    "[low_purchase_intent_customers] Base size (0) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[not_low_purchase_intent_customers] Base size (0) is below minimum threshold (30). Results may not be statistically reliable."
+  ]
+}

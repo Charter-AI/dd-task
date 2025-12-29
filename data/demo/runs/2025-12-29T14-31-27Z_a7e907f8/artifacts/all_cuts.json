@@ -1,0 +1,7 @@
+[
+  "cut_id='cut_nps_by_region' metric=MetricSpec(type='nps', question_id='Q_NPS', params={}) dimensions=[DimensionSpec(kind='question', id='Q_REGION')] filter=None weight_column=None output={}",
+  "cut_id='cut_mean_sat_by_plan' metric=MetricSpec(type='mean', question_id='Q_OVERALL_SAT', params={}) dimensions=[DimensionSpec(kind='question', id='Q_PLAN')] filter=None weight_column=None output={}",
+  "cut_id='cut_feature_usage_by_satisfaction' metric=MetricSpec(type='mean', question_id='Q_OVERALL_SAT', params={}) dimensions=[DimensionSpec(kind='question', id='Q_FEATURES_USED')] filter=None weight_column=None output={}",
+  "cut_id='cut_sat_by_tenure' metric=MetricSpec(type='mean', question_id='Q_OVERALL_SAT', params={}) dimensions=[DimensionSpec(kind='question', id='Q_TENURE')] filter=None weight_column=None output={}",
+  "cut_id='cut_at_risk_customers' metric=MetricSpec(type='frequency', question_id='Q_NPS', params={}) dimensions=[DimensionSpec(kind='segment', id='at_risk_customers')] filter=And(kind='and', children=[PredicateRange(kind='range', question_id='Q_NPS', min=0, max=6, inclusive=True), PredicateIn(kind='in', question_id='Q_PURCHASE_INTENT', values=['1', '2'])]) weight_column=None output={}"
+]

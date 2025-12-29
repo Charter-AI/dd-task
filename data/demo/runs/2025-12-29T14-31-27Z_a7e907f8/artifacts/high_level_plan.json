@@ -1,0 +1,138 @@
+{
+  "intents": [
+    {
+      "intent_id": "nps_region_analysis",
+      "description": "Analyze NPS by region to understand regional satisfaction differences",
+      "segments_needed": [
+        "regions"
+      ],
+      "priority": 1
+    },
+    {
+      "intent_id": "satisfaction_plan_analysis",
+      "description": "Compare satisfaction levels across different plan types (Free, Basic, Professional, Enterprise)",
+      "segments_needed": [
+        "plan_types"
+      ],
+      "priority": 1
+    },
+    {
+      "intent_id": "feature_usage_satisfaction_correlation",
+      "description": "Correlate feature usage with satisfaction levels to identify features driving satisfaction",
+      "segments_needed": [
+        "feature_users"
+      ],
+      "priority": 2
+    },
+    {
+      "intent_id": "tenure_satisfaction_analysis",
+      "description": "Analyze satisfaction profiles of long-term vs new customers",
+      "segments_needed": [
+        "tenure_groups"
+      ],
+      "priority": 2
+    },
+    {
+      "intent_id": "retention_risk_assessment",
+      "description": "Identify customers at risk of churn based on low NPS and low purchase intent",
+      "segments_needed": [
+        "at_risk_customers"
+      ],
+      "priority": 1
+    }
+  ],
+  "rationale": "The plan focuses on understanding customer satisfaction, identifying key drivers, and assessing retention risks to inform business decisions and product improvements.",
+  "suggested_segments": [
+    {
+      "segment_id": "regions",
+      "name": "Regions",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_REGION",
+        "values": [
+          "NORTH",
+          "SOUTH",
+          "EAST",
+          "WEST",
+          "CENTRAL"
+        ]
+      },
+      "intended_partition": false,
+      "notes": null
+    },
+    {
+      "segment_id": "plan_types",
+      "name": "Plan Types",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_PLAN",
+        "values": [
+          "FREE",
+          "BASIC",
+          "PRO",
+          "ENT"
+        ]
+      },
+      "intended_partition": false,
+      "notes": null
+    },
+    {
+      "segment_id": "feature_users",
+      "name": "Feature Users",
+      "definition": {
+        "kind": "contains_any",
+        "question_id": "Q_FEATURES_USED",
+        "values": [
+          "DASH",
+          "REPORT",
+          "EXPORT",
+          "API",
+          "MOBILE",
+          "COLLAB"
+        ]
+      },
+      "intended_partition": false,
+      "notes": null
+    },
+    {
+      "segment_id": "tenure_groups",
+      "name": "Tenure Groups",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_TENURE",
+        "values": [
+          "NEW",
+          "MED",
+          "LONG"
+        ]
+      },
+      "intended_partition": false,
+      "notes": null
+    },
+    {
+      "segment_id": "at_risk_customers",
+      "name": "At-Risk Customers",
+      "definition": {
+        "kind": "and",
+        "children": [
+          {
+            "kind": "range",
+            "question_id": "Q_NPS",
+            "min": 0,
+            "max": 6,
+            "inclusive": true
+          },
+          {
+            "kind": "range",
+            "question_id": "Q_PURCHASE_INTENT",
+            "min": 1,
+            "max": 2,
+            "inclusive": true
+          }
+        ]
+      },
+      "intended_partition": false,
+      "notes": null
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "cut_id": "cut_feature_usage_correlation_with_satisfaction",
+  "metric_type": "mean",
+  "question_id": "Q_OVERALL_SAT",
+  "result_data": {
+    "by_dimension": {
+      "DASH": 2.4286,
+      "DASH;EXPORT;MOBILE": 4.0,
+      "DASH;MOBILE": 3.1667,
+      "DASH;REPORT": 3.6,
+      "DASH;REPORT;API": 5.0,
+      "DASH;REPORT;API;COLLAB": 5.0,
+      "DASH;REPORT;COLLAB": 4.3333,
+      "DASH;REPORT;EXPORT": 4.0833,
+      "DASH;REPORT;EXPORT;API": 5.0,
+      "DASH;REPORT;EXPORT;API;COLLAB": 5.0,
+      "DASH;REPORT;EXPORT;COLLAB": 5.0,
+      "DASH;REPORT;EXPORT;MOBILE": 5.0,
+      "DASH;REPORT;MOBILE": 4.0
+    },
+    "base_sizes": {
+      "DASH": 7,
+      "DASH;EXPORT;MOBILE": 1,
+      "DASH;MOBILE": 6,
+      "DASH;REPORT": 5,
+      "DASH;REPORT;API": 1,
+      "DASH;REPORT;API;COLLAB": 6,
+      "DASH;REPORT;COLLAB": 3,
+      "DASH;REPORT;EXPORT": 12,
+      "DASH;REPORT;EXPORT;API": 3,
+      "DASH;REPORT;EXPORT;API;COLLAB": 5,
+      "DASH;REPORT;EXPORT;COLLAB": 4,
+      "DASH;REPORT;EXPORT;MOBILE": 1,
+      "DASH;REPORT;MOBILE": 6
+    }
+  },
+  "base_n": 60,
+  "dimensions": [
+    "question:Q_FEATURES_USED"
+  ],
+  "warnings": [
+    "[DASH] Base size (7) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;EXPORT;MOBILE] Base size (1) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;MOBILE] Base size (6) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT] Base size (5) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT;API] Base size (1) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT;API;COLLAB] Base size (6) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT;COLLAB] Base size (3) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT;EXPORT] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT;EXPORT;API] Base size (3) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT;EXPORT;API;COLLAB] Base size (5) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT;EXPORT;COLLAB] Base size (4) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT;EXPORT;MOBILE] Base size (1) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[DASH;REPORT;MOBILE] Base size (6) is below minimum threshold (30). Results may not be statistically reliable."
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "cut_id": "cut_sat_by_tenure",
+  "metric_type": "mean",
+  "question_id": "Q_OVERALL_SAT",
+  "result_data": {
+    "by_dimension": {
+      "LONG": 4.6207,
+      "MED": 4.1333,
+      "NEW": 3.0
+    },
+    "base_sizes": {
+      "LONG": 29,
+      "MED": 15,
+      "NEW": 16
+    }
+  },
+  "base_n": 60,
+  "dimensions": [
+    "question:Q_TENURE"
+  ],
+  "warnings": [
+    "[LONG] Base size (29) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[MED] Base size (15) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[NEW] Base size (16) is below minimum threshold (30). Results may not be statistically reliable."
+  ]
+}
