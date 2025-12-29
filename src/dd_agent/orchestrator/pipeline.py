@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import pandas as pd
+from rich.console import Console  # 添加这一行
 
 from dd_agent.contracts.questions import Question
 from dd_agent.contracts.specs import CutSpec, HighLevelPlan, SegmentSpec
@@ -17,6 +18,9 @@ from dd_agent.run_store import RunStore
 from dd_agent.util.logging import get_logger
 
 logger = get_logger("pipeline")
+
+# 创建全局console对象
+console = Console()
 
 
 @dataclass
@@ -435,3 +439,243 @@ class Pipeline:
                 run_dir=run_dir,
                 errors=[str(e)]
             )
+    
+    def run_interactive(
+            self,
+            prompt: Optional[str] = None,
+            save_run: bool = True,
+        ) -> PipelineResult:
+            """Execute an analysis request with interactive ambiguity resolution.
+            
+            Args:
+                prompt: Optional starting prompt (if None, will prompt user)
+                save_run: Whether to save run artifacts
+                
+            Returns:
+                PipelineResult with execution details
+            """
+            # 1. Get prompt from user if not provided
+            if not prompt:
+                console = Console()
+                prompt = console.input("\n🔍 [bold]Enter analysis request: [/bold]")
+                if not prompt.strip():
+                    return PipelineResult(
+                        success=False,
+                        run_id="",
+                        run_dir=Path("."),
+                        errors=["No prompt provided"]
+                    )
+            
+            # 2. Initialize RunStore
+            run_store = RunStore(self.runs_dir)
+            run_id = run_store.new_run(prompt)
+            run_dir = run_store.run_dir
+            
+            logger.info(f"Starting interactive run {run_id} with prompt: {prompt}")
+            
+            try:
+                # 3. Plan the cut (may require user interaction)
+                logger.info(f"Planning cut for: {prompt}")
+                cut_result = self.agent.plan_cut(prompt)
+                
+                # 4. Handle ambiguity resolution
+                resolution_attempts = 0
+                max_resolution_attempts = 3
+                
+                while hasattr(cut_result, 'requires_user_input') and cut_result.requires_user_input and resolution_attempts < max_resolution_attempts:
+                    resolution_attempts += 1
+                    
+                    console = Console()
+                    console.print("\n" + "="*60)
+                    console.print("[bold yellow]🤔 AMBIGUITY DETECTED[/bold yellow]")
+                    console.print("="*60)
+                    console.print(f"Your request '[cyan]{prompt}[/cyan]' could mean multiple things:")
+                    console.print()
+                    
+                    # Display options
+                    for i, option in enumerate(cut_result.user_input_options):
+                        question_id = option.get("question_id", "UNKNOWN")
+                        label = option.get("label", "No label")
+                        match_reason = option.get("match_reason", "No reason given")
+                        confidence = option.get("confidence", 0.0)
+                        
+                        console.print(f"[bold]{i+1}.[/bold] {label}")
+                        console.print(f"   [dim]Question ID: {question_id}[/dim]")
+                        console.print(f"   [dim]Match reason: {match_reason}[/dim]")
+                        console.print(f"   [dim]Confidence: {confidence:.1%}[/dim]")
+                        console.print()
+                    
+                    console.print(f"[bold]{len(cut_result.user_input_options)+1}.[/bold] Enter a different request")
+                    console.print(f"[bold]{len(cut_result.user_input_options)+2}.[/bold] Cancel analysis")
+                    console.print()
+                    
+                    # Get user choice
+                    try:
+                        choice = console.input(f"Select option (1-{len(cut_result.user_input_options)+2}): ").strip()
+                        choice_num = int(choice)
+                        
+                        if choice_num == len(cut_result.user_input_options) + 1:
+                            # New request
+                            prompt = console.input("Enter new analysis request: ")
+                            if not prompt.strip():
+                                return PipelineResult(
+                                    success=False,
+                                    run_id=run_id,
+                                    run_dir=run_dir,
+                                    errors=["No new prompt provided"]
+                                )
+                            cut_result = self.agent.plan_cut(prompt)
+                            
+                        elif choice_num == len(cut_result.user_input_options) + 2:
+                            # Cancel
+                            return PipelineResult(
+                                success=False,
+                                run_id=run_id,
+                                run_dir=run_dir,
+                                errors=["Analysis cancelled by user"]
+                            )
+                            
+                        elif 1 <= choice_num <= len(cut_result.user_input_options):
+                            # User selected an option
+                            selected_index = choice_num - 1
+                            logger.info(f"User selected option {choice_num}: {cut_result.user_input_options[selected_index].get('question_id')}")
+                            
+                            # Resolve with selected option
+                            # First, we need to ensure agent has resolve_ambiguity_and_plan method
+                            if hasattr(self.agent, 'resolve_ambiguity_and_plan'):
+                                cut_result = self.agent.resolve_ambiguity_and_plan(prompt, selected_index)
+                            else:
+                                # Fallback: create modified prompt with selection
+                                selected_question_id = cut_result.user_input_options[selected_index].get('question_id')
+                                modified_prompt = f"{prompt} (use question: {selected_question_id})"
+                                cut_result = self.agent.plan_cut(modified_prompt)
+                            
+                        else:
+                            console.print(f"[red]Invalid choice. Please enter 1-{len(cut_result.user_input_options)+2}[/red]")
+                            continue
+                            
+                    except ValueError:
+                        console.print("[red]Please enter a number[/red]")
+                        continue
+                    
+                    except Exception as e:
+                        logger.error(f"Error during user interaction: {e}")
+                        return PipelineResult(
+                            success=False,
+                            run_id=run_id,
+                            run_dir=run_dir,
+                            errors=[f"Interaction error: {str(e)}"]
+                        )
+                
+                # 5. Check if we still have ambiguity after attempts
+                if hasattr(cut_result, 'requires_user_input') and cut_result.requires_user_input:
+                    console.print("\n[bold yellow]⚠️  Too many resolution attempts. Using highest confidence option.[/bold yellow]")
+                    # Use first (highest confidence) option
+                    if hasattr(self.agent, 'resolve_ambiguity_and_plan'):
+                        cut_result = self.agent.resolve_ambiguity_and_plan(prompt, 0)
+                    else:
+                        selected_question_id = cut_result.user_input_options[0].get('question_id')
+                        modified_prompt = f"{prompt} (use question: {selected_question_id})"
+                        cut_result = self.agent.plan_cut(modified_prompt)
+                
+                # 6. Process the final cut result
+                if not cut_result.ok:
+                    errors = [str(e) for e in cut_result.errors]
+                    logger.error(f"Cut planning failed: {errors}")
+                    
+                    if save_run:
+                        run_store.save_artifact("cut_planning_error.json", {
+                            "prompt": prompt,
+                            "errors": errors,
+                            "interactive": True,
+                            "timestamp": datetime.now().isoformat()
+                        })
+                    
+                    return PipelineResult(
+                        success=False,
+                        run_id=run_id,
+                        run_dir=run_dir,
+                        errors=errors
+                    )
+                
+                cut_spec = cut_result.data
+                logger.info(f"Cut planned successfully: {cut_spec.cut_id}")
+
+                # 7. Execute the cut
+                logger.info(f"Executing cut: {cut_spec.cut_id}")
+                execution_result = self.agent.execute_single_cut(cut_spec)
+                
+                # 8. Save artifacts and generate report
+                if save_run:
+                    # Save input files
+                    run_store.save_input("questions.json", self.data_dir / "questions.json")
+                    run_store.save_input("responses.csv", self.data_dir / "responses.csv")
+                    if self.scope:
+                        run_store.save_input_text("scope.md", self.scope)
+                    
+                    # Compute dataset hash
+                    run_store.compute_dataset_hash(
+                        self.data_dir / "questions.json",
+                        self.data_dir / "responses.csv",
+                        self.data_dir / "scope.md" if (self.data_dir / "scope.md").exists() else None
+                    )
+                    
+                    # Save cut specification
+                    run_store.save_artifact("cut_spec.json", cut_spec)
+                    
+                    # Save execution results
+                    run_store.save_artifact("execution_result.json", execution_result)
+                    
+                    # Save interaction trace
+                    if hasattr(cut_result, 'trace') and cut_result.trace:
+                        run_store.save_artifact("interaction_trace.json", {
+                            "original_prompt": prompt,
+                            "resolution_attempts": resolution_attempts,
+                            "final_cut_id": cut_spec.cut_id,
+                            "trace": cut_result.trace
+                        })
+                    
+                    # Save individual tables
+                    for i, table in enumerate(execution_result.tables):
+                        table_filename = f"table_{i}_{cut_spec.cut_id}.json"
+                        run_store.save_artifact(table_filename, table)
+                        
+                        if hasattr(table, 'df') and table.df is not None:
+                            csv_filename = f"table_{i}_{cut_spec.cut_id}.csv"
+                            table.df.to_csv(run_dir / "artifacts" / csv_filename, index=False)
+                    
+                    # Generate report
+                    pipeline_result = PipelineResult(
+                        success=True,
+                        run_id=run_id,
+                        run_dir=run_dir,
+                        cuts_planned=[cut_spec],
+                        execution_result=execution_result
+                    )
+                    run_store.save_report(pipeline_result)
+                    
+                    logger.info(f"Artifacts saved to: {run_dir}")
+
+                return PipelineResult(
+                    success=True,
+                    run_id=run_id,
+                    run_dir=run_dir,
+                    cuts_planned=[cut_spec],
+                    execution_result=execution_result
+                )
+                
+            except Exception as e:
+                logger.error(f"Interactive pipeline execution failed: {str(e)}")
+                
+                if save_run and 'run_store' in locals():
+                    run_store.save_artifact("interactive_error.json", {
+                        "error": str(e),
+                        "timestamp": datetime.now().isoformat()
+                    })
+                
+                return PipelineResult(
+                    success=False,
+                    run_id=run_id,
+                    run_dir=run_dir,
+                    errors=[str(e)]
+                )

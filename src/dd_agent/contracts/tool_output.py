@@ -1,6 +1,6 @@
 """Tool output envelope and message types."""
 
-from typing import Any, Generic, Optional, TypeVar
+from typing import Generic, TypeVar, Optional, List, Dict, Any
 
 from pydantic import BaseModel, Field
 
@@ -39,6 +39,29 @@ class ToolOutput(BaseModel, Generic[T]):
         default_factory=dict,
         description="Trace information (prompts, model, latency, mappings, etc.)",
     )
+
+    # add for interactions
+    requires_user_input: bool = Field(default=False, description="Whether tool requires user input to proceed")
+    user_input_options: List[Dict[str, Any]] = Field(default_factory=list, description="Options for user to choose from")
+    user_input_prompt: str = Field(default="", description="Prompt to show user when input is needed")
+
+    @classmethod
+    def partial_for_user_input(
+        cls,
+        prompt: str,
+        options: List[Dict[str, Any]],
+        trace: Optional[Dict[str, Any]] = None
+    ) -> "ToolOutput[T]":
+        """Create a partial result that requires user input."""
+        return cls(
+            ok=False,
+            data=None,
+            requires_user_input=True,
+            user_input_prompt=prompt,
+            user_input_options=options,
+            trace=trace or {}
+        )
+
 
     @classmethod
     def success(

@@ -1,0 +1,17 @@
+[
+  {
+    "intent_id": "intent_001",
+    "description": "Analyze overall NPS and satisfaction levels to assess customer loyalty and satisfaction.",
+    "errors": []
+  },
+  {
+    "intent_id": "intent_002",
+    "description": "Compare satisfaction across different subscription plans to identify if enterprise customers are more satisfied than free/basic users.",
+    "errors": []
+  },
+  {
+    "intent_id": "intent_003",
+    "description": "Analyze feature usage correlation with satisfaction to identify which features drive the highest satisfaction.",
+    "errors": []
+  }
+]

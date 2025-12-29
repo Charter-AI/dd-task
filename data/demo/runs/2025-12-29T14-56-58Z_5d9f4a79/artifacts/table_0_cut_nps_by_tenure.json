@@ -1,0 +1,23 @@
+{
+  "cut_id": "cut_nps_by_tenure",
+  "metric_type": "nps",
+  "question_id": "Q_NPS",
+  "result_data": {
+    "by_dimension": {
+      "LONG": 62.07,
+      "NEW": -75.0
+    },
+    "base_sizes": {
+      "LONG": 29,
+      "NEW": 16
+    }
+  },
+  "base_n": 45,
+  "dimensions": [
+    "question:Q_TENURE"
+  ],
+  "warnings": [
+    "[LONG] Base size (29) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[NEW] Base size (16) is below minimum threshold (30). Results may not be statistically reliable."
+  ]
+}

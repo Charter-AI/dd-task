@@ -1,0 +1,8 @@
+{
+  "total_intents": 5,
+  "intents_processed": 5,
+  "cuts_planned": 2,
+  "cuts_failed": 3,
+  "tables_generated": 2,
+  "errors_encountered": 0
+}

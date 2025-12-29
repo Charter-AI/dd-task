@@ -1,0 +1,23 @@
+{
+  "cut_id": "cut_at_risk_customers",
+  "metric_type": "nps",
+  "question_id": "Q_NPS",
+  "result_data": {
+    "by_dimension": {
+      "low_purchase_intent": -100.0,
+      "not_low_purchase_intent": 25.45
+    },
+    "base_sizes": {
+      "low_purchase_intent": 5,
+      "not_low_purchase_intent": 55
+    }
+  },
+  "base_n": 60,
+  "dimensions": [
+    "segment:low_purchase_intent"
+  ],
+  "warnings": [
+    "[low_purchase_intent] Base size (5) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[not_low_purchase_intent] Base size (55) is below recommended threshold (100). Interpret results with caution."
+  ]
+}

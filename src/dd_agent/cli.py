@@ -259,6 +259,58 @@ def eval(
     console.print("[yellow]Evaluation harness not yet implemented.[/yellow]")
     console.print("See eval/ directory for the evaluation framework.")
 
+@app.command()
+def interactive(
+    data: Path = typer.Option(..., "--data", "-d", help="Path to data directory"),
+    prompt: Optional[str] = typer.Option(None, "--prompt", "-p", help="Analysis request (optional, will prompt if not provided)"),
+):
+    """Run analysis with interactive ambiguity resolution."""
+    init_default_logging()
+
+    console.print(Panel.fit(
+        "[bold blue]DD Analytics Agent - Interactive Mode[/bold blue]",
+        border_style="blue",
+    ))
+
+    from dd_agent.config import settings
+
+    if not settings.is_configured:
+        console.print("[yellow]Warning: Azure OpenAI not configured.[/yellow]")
+        raise typer.Exit(1)
+
+    from dd_agent.orchestrator.pipeline import Pipeline
+    import json
+    
+    try:
+        pipeline = Pipeline(data_dir=data)
+        
+        # Use the interactive pipeline method
+        result = pipeline.run_interactive(prompt=prompt, save_run=True)
+        
+        if result.success:
+            console.print(Panel.fit("[bold green]✅ Analysis Complete[/bold green]"))
+            console.print(f"[bold]Run ID:[/bold] {result.run_id}")
+            console.print(f"[bold]Run Dir:[/bold] {result.run_dir}")
+            
+            if result.execution_result and result.execution_result.tables:
+                table = result.execution_result.tables[0]
+                console.print(f"\n[bold]Metric:[/bold] {table.metric_type}")
+                console.print(f"[bold]Question:[/bold] {table.question_id}")
+                console.print(f"[bold]Base N:[/bold] {table.base_n}")
+                
+                # Show results summary
+                if hasattr(table, 'result_data'):
+                    console.print(f"\n[bold]Result:[/bold]")
+                    console.print(json.dumps(table.result_data, indent=2))
+        else:
+            console.print(Panel.fit("[bold red]❌ Analysis Failed[/bold red]"))
+            for error in result.errors:
+                console.print(f"- {error}")
+                
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {str(e)}")
+        raise typer.Exit(1)
+
 
 if __name__ == "__main__":
     app()

@@ -1,0 +1,38 @@
+{
+  "tables": [
+    {
+      "cut_id": "cut_overall_sat_by_region",
+      "metric_type": "mean",
+      "question_id": "Q_OVERALL_SAT",
+      "result_data": {
+        "by_dimension": {
+          "CENTRAL": 4.1667,
+          "EAST": 4.1667,
+          "NORTH": 4.25,
+          "SOUTH": 4.0,
+          "WEST": 3.75
+        },
+        "base_sizes": {
+          "CENTRAL": 12,
+          "EAST": 12,
+          "NORTH": 12,
+          "SOUTH": 12,
+          "WEST": 12
+        }
+      },
+      "base_n": 60,
+      "dimensions": [
+        "question:Q_REGION"
+      ],
+      "warnings": [
+        "[CENTRAL] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+        "[EAST] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+        "[NORTH] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+        "[SOUTH] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+        "[WEST] Base size (12) is below minimum threshold (30). Results may not be statistically reliable."
+      ]
+    }
+  ],
+  "errors": [],
+  "segments_computed": {}
+}

@@ -177,3 +177,41 @@ class Agent:
             ExecutionResult with the table
         """
         return self.execute_cuts([cut])
+
+    def resolve_ambiguity_and_plan(self, request: str, choice_index: int) -> ToolOutput[CutSpec]:
+        """Resolve ambiguity by user choice and plan cut.
+        
+        Args:
+            request: Original request
+            choice_index: Index of user's choice (0-based)
+            
+        Returns:
+            ToolOutput with resolved CutSpec
+        """
+        # First call to get ambiguity options
+        context = self._get_context(prompt=request)
+        initial_result = self.cut_planner.run(context)
+        
+        if not hasattr(initial_result, 'requires_user_input') or not initial_result.requires_user_input:
+            return initial_result
+        
+        # Get the selected question ID
+        if choice_index < 0 or choice_index >= len(initial_result.user_input_options):
+            return ToolOutput.failure(
+                errors=[err("invalid_choice", f"Invalid choice index: {choice_index}")]
+            )
+        
+        selected_option = initial_result.user_input_options[choice_index]
+        selected_question_id = selected_option.get("question_id")
+        
+        if not selected_question_id:
+            return ToolOutput.failure(
+                errors=[err("no_question_id", "Selected option has no question_id")]
+            )
+        
+        # Create a modified prompt with the selection
+        modified_prompt = f"{request} (use question: {selected_question_id})"
+        modified_context = self._get_context(prompt=modified_prompt)
+        
+        # Try again with modified prompt
+        return self.cut_planner.run(modified_context)

@@ -1,0 +1,163 @@
+{
+  "tables": [
+    {
+      "cut_id": "cut_distribution_support_sat_by_region",
+      "metric_type": "frequency",
+      "question_id": "Q_SUPPORT_SAT",
+      "result_data": {
+        "by_dimension": {
+          "CENTRAL": [
+            {
+              "value": 3,
+              "label": "Neutral",
+              "count": 1,
+              "percentage": 8.33
+            },
+            {
+              "value": 4,
+              "label": "Satisfied",
+              "count": 7,
+              "percentage": 58.33
+            },
+            {
+              "value": 5,
+              "label": "Very Satisfied",
+              "count": 4,
+              "percentage": 33.33
+            }
+          ],
+          "EAST": [
+            {
+              "value": 2,
+              "label": "Dissatisfied",
+              "count": 1,
+              "percentage": 8.33
+            },
+            {
+              "value": 3,
+              "label": "Neutral",
+              "count": 2,
+              "percentage": 16.67
+            },
+            {
+              "value": 4,
+              "label": "Satisfied",
+              "count": 4,
+              "percentage": 33.33
+            },
+            {
+              "value": 5,
+              "label": "Very Satisfied",
+              "count": 5,
+              "percentage": 41.67
+            }
+          ],
+          "NORTH": [
+            {
+              "value": 2,
+              "label": "Dissatisfied",
+              "count": 1,
+              "percentage": 8.33
+            },
+            {
+              "value": 3,
+              "label": "Neutral",
+              "count": 2,
+              "percentage": 16.67
+            },
+            {
+              "value": 4,
+              "label": "Satisfied",
+              "count": 2,
+              "percentage": 16.67
+            },
+            {
+              "value": 5,
+              "label": "Very Satisfied",
+              "count": 7,
+              "percentage": 58.33
+            }
+          ],
+          "SOUTH": [
+            {
+              "value": 1,
+              "label": "Very Dissatisfied",
+              "count": 1,
+              "percentage": 8.33
+            },
+            {
+              "value": 2,
+              "label": "Dissatisfied",
+              "count": 1,
+              "percentage": 8.33
+            },
+            {
+              "value": 3,
+              "label": "Neutral",
+              "count": 2,
+              "percentage": 16.67
+            },
+            {
+              "value": 4,
+              "label": "Satisfied",
+              "count": 3,
+              "percentage": 25.0
+            },
+            {
+              "value": 5,
+              "label": "Very Satisfied",
+              "count": 5,
+              "percentage": 41.67
+            }
+          ],
+          "WEST": [
+            {
+              "value": 2,
+              "label": "Dissatisfied",
+              "count": 1,
+              "percentage": 8.33
+            },
+            {
+              "value": 3,
+              "label": "Neutral",
+              "count": 2,
+              "percentage": 16.67
+            },
+            {
+              "value": 4,
+              "label": "Satisfied",
+              "count": 8,
+              "percentage": 66.67
+            },
+            {
+              "value": 5,
+              "label": "Very Satisfied",
+              "count": 1,
+              "percentage": 8.33
+            }
+          ]
+        },
+        "base_sizes": {
+          "CENTRAL": 12,
+          "EAST": 12,
+          "NORTH": 12,
+          "SOUTH": 12,
+          "WEST": 12
+        }
+      },
+      "base_n": 60,
+      "dimensions": [
+        "question:Q_REGION"
+      ],
+      "warnings": [
+        "[CENTRAL] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+        "[EAST] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+        "[NORTH] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+        "[SOUTH] Base size (12) is below minimum threshold (30). Results may not be statistically reliable.",
+        "[WEST] Base size (12) is below minimum threshold (30). Results may not be statistically reliable."
+      ]
+    }
+  ],
+  "errors": [],
+  "segments_computed": {}
+}

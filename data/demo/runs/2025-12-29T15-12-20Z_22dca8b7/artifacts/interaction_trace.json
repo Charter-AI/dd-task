@@ -1,0 +1,51 @@
+{
+  "original_prompt": "Show satisfaction by region",
+  "resolution_attempts": 1,
+  "final_cut_id": "cut_overall_sat_by_region",
+  "trace": {
+    "prompt": "Show satisfaction by region (use question: Q_OVERALL_SAT)",
+    "resolution_map": {
+      "satisfaction": "Q_OVERALL_SAT",
+      "region": "Q_REGION"
+    },
+    "llm_response": {
+      "ok": true,
+      "cut": {
+        "cut_id": "cut_overall_sat_by_region",
+        "metric": {
+          "type": "mean",
+          "question_id": "Q_OVERALL_SAT",
+          "params": {}
+        },
+        "dimensions": [
+          {
+            "kind": "question",
+            "id": "Q_REGION"
+          }
+        ],
+        "filter": null,
+        "weight_column": null,
+        "output": {}
+      },
+      "resolution_map": {
+        "satisfaction": "Q_OVERALL_SAT",
+        "region": "Q_REGION"
+      },
+      "ambiguity_options": [],
+      "requires_user_resolution": false,
+      "errors": []
+    },
+    "llm_trace": {
+      "model": "gpt-4o-v2",
+      "temperature": 0.1,
+      "latency_s": 2.052,
+      "usage": {
+        "prompt_tokens": 4358,
+        "completion_tokens": 103,
+        "total_tokens": 4461
+      },
+      "finish_reason": "stop"
+    },
+    "validation_passed": true
+  }
+}

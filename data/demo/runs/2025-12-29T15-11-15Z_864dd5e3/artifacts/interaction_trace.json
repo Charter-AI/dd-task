@@ -1,0 +1,51 @@
+{
+  "original_prompt": "show distribution of satisfaction by region",
+  "resolution_attempts": 1,
+  "final_cut_id": "cut_distribution_support_sat_by_region",
+  "trace": {
+    "prompt": "show distribution of satisfaction by region (use question: Q_SUPPORT_SAT)",
+    "resolution_map": {
+      "satisfaction": "Q_SUPPORT_SAT",
+      "region": "Q_REGION"
+    },
+    "llm_response": {
+      "ok": true,
+      "cut": {
+        "cut_id": "cut_distribution_support_sat_by_region",
+        "metric": {
+          "type": "frequency",
+          "question_id": "Q_SUPPORT_SAT",
+          "params": {}
+        },
+        "dimensions": [
+          {
+            "kind": "question",
+            "id": "Q_REGION"
+          }
+        ],
+        "filter": null,
+        "weight_column": null,
+        "output": {}
+      },
+      "resolution_map": {
+        "satisfaction": "Q_SUPPORT_SAT",
+        "region": "Q_REGION"
+      },
+      "ambiguity_options": [],
+      "requires_user_resolution": false,
+      "errors": []
+    },
+    "llm_trace": {
+      "model": "gpt-4o-v2",
+      "temperature": 0.1,
+      "latency_s": 1.152,
+      "usage": {
+        "prompt_tokens": 4359,
+        "completion_tokens": 81,
+        "total_tokens": 4440
+      },
+      "finish_reason": "stop"
+    },
+    "validation_passed": true
+  }
+}
