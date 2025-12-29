@@ -1,0 +1,9 @@
+[
+  {
+    "intent_id": "intent_002",
+    "description": "Compare satisfaction across subscription plans to identify if enterprise customers are more satisfied than free/basic users",
+    "errors": [
+      "code='unexpected_error' message=\"Unexpected error: 2 validation errors for CutPlanResult\\ncut.filter.or.children.0\\n  Input tag 'segment' found using 'kind' does not match any of the expected tags: 'eq', 'in', 'range', 'contains_any', 'and', 'or', 'not' [type=union_tag_invalid, input_value={'kind': 'segment', 'id': 'enterprise_customers'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/union_tag_invalid\\ncut.filter.or.children.1\\n  Input tag 'segment' found using 'kind' does not match any of the expected tags: 'eq', 'in', 'range', 'contains_any', 'and', 'or', 'not' [type=union_tag_invalid, input_value={'kind': 'segment', 'id': 'free_basic_customers'}, input_type=dict]\\n    For further information visit https://errors.pydantic.dev/2.12/v/union_tag_invalid\" context={}"
+    ]
+  }
+]

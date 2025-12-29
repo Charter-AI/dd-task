@@ -1,0 +1,17 @@
+{
+  "cut_id": "cut_sat_by_plan",
+  "metric": {
+    "type": "mean",
+    "question_id": "Q_OVERALL_SAT",
+    "params": {}
+  },
+  "dimensions": [
+    {
+      "kind": "question",
+      "id": "Q_PLAN"
+    }
+  ],
+  "filter": null,
+  "weight_column": null,
+  "output": {}
+}

@@ -1,0 +1,9 @@
+[
+  {
+    "intent_id": "intent_003",
+    "description": "Analyze correlation between feature usage and overall satisfaction to identify which features drive the highest satisfaction",
+    "errors": [
+      "code='no_cut_generated' message='LLM did not generate a CutSpec' context={}"
+    ]
+  }
+]

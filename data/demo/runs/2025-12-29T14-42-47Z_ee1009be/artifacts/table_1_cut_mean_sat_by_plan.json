@@ -1,0 +1,29 @@
+{
+  "cut_id": "cut_mean_sat_by_plan",
+  "metric_type": "mean",
+  "question_id": "Q_OVERALL_SAT",
+  "result_data": {
+    "by_dimension": {
+      "BASIC": 3.6364,
+      "ENT": 4.8824,
+      "FREE": 2.5556,
+      "PRO": 4.2609
+    },
+    "base_sizes": {
+      "BASIC": 11,
+      "ENT": 17,
+      "FREE": 9,
+      "PRO": 23
+    }
+  },
+  "base_n": 60,
+  "dimensions": [
+    "question:Q_PLAN"
+  ],
+  "warnings": [
+    "[BASIC] Base size (11) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[ENT] Base size (17) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[FREE] Base size (9) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[PRO] Base size (23) is below minimum threshold (30). Results may not be statistically reliable."
+  ]
+}
