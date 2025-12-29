@@ -1,7 +1,6 @@
 """Deterministic execution engine for analysis cuts."""
 
 from typing import Any, Optional
-
 import pandas as pd
 from pydantic import BaseModel, Field
 
@@ -66,10 +65,30 @@ class Executor:
 
         # Pre-computed segment masks
         self._segment_masks: dict[str, pd.Series] = {}
+        
+        # Materialize segments on initialization
+        if self.segments_by_id:
+            self.materialize_segments()
 
     def materialize_segments(self) -> dict[str, int]:
         """Pre-compute masks for all segments."""
-        return {sid: 0 for sid in self.segments_by_id}
+        segment_bases = {}
+        
+        for seg_id, segment_spec in self.segments_by_id.items():
+            # Build segment mask using the filter expression
+            mask = build_mask(self.df, segment_spec.filter, self.questions_by_id)
+            self._segment_masks[seg_id] = mask
+            
+            # Calculate base size
+            segment_bases[seg_id] = int(mask.sum())
+            
+            # Also compute complement mask for dimension comparisons
+            if segment_spec.include_complement:
+                complement_id = f"not_{seg_id}"
+                self._segment_masks[complement_id] = ~mask
+                segment_bases[complement_id] = int((~mask).sum())
+        
+        return segment_bases
 
     def execute_cuts(self, cuts: list[CutSpec]) -> ExecutionResult:
         """Execute all cuts and return results.
@@ -80,7 +99,7 @@ class Executor:
         Returns:
             ExecutionResult with tables and any errors
         """
-        # Materialize segments first
+        # Ensure segments are materialized
         segment_bases = self.materialize_segments()
 
         result = ExecutionResult(segments_computed=segment_bases)
@@ -112,7 +131,25 @@ class Executor:
 
         # Apply cut filter if present
         if cut.filter is not None:
-            mask = mask & build_mask(self.df, cut.filter, self.questions_by_id)
+            # Handle different filter types
+            if isinstance(cut.filter, str):
+                # String could be a segment ID
+                if cut.filter in self.segments_by_id:
+                    # Use pre-computed mask if available
+                    if cut.filter in self._segment_masks:
+                        mask = self._segment_masks[cut.filter]
+                    else:
+                        # Compute dynamically
+                        mask = build_mask(self.df, 
+                                         self.segments_by_id[cut.filter].filter,
+                                         self.questions_by_id)
+                else:
+                    # Try to treat as a simple column filter
+                    # This is a simplified case for direct column filters
+                    pass  # We'll handle this in build_mask
+            else:
+                # Regular filter expression
+                mask = mask & build_mask(self.df, cut.filter, self.questions_by_id)
 
         # Get the filtered DataFrame
         filtered_df = self.df[mask]
@@ -199,7 +236,6 @@ class Executor:
             
         return result
 
-
     def _compute_metric_with_dimensions(
         self,
         cut: CutSpec,
@@ -224,6 +260,7 @@ class Executor:
 
         # Get dimension values
         if dim.kind == "question":
+            # Question dimension
             dim_question = self.questions_by_id.get(dim.id)
             if dim_question is None:
                 raise ValueError(f"Dimension question '{dim.id}' not found")
@@ -231,18 +268,34 @@ class Executor:
             if dim_col not in df.columns:
                 raise ValueError(f"Dimension column '{dim_col}' not found")
             groups = df.groupby(dim_col)
+            
+        elif dim.kind == "segment":
+            # Segment dimension - handle specially
+            if dim.id in self._segment_masks:
+                # Use pre-computed masks
+                mask = self._segment_masks[dim.id]
+                groups = {
+                    f"{dim.id}": df[mask],
+                    f"not_{dim.id}": df[~mask],
+                }
+            elif dim.id in self.segments_by_id:
+                # Compute mask for segment
+                mask = build_mask(df, self.segments_by_id[dim.id].filter, self.questions_by_id)
+                groups = {
+                    f"{dim.id}": df[mask],
+                    f"not_{dim.id}": df[~mask],
+                }
+            else:
+                raise ValueError(f"Segment dimension '{dim.id}' not found")
         else:
-            # Segment dimension
-            groups = {
-                f"{dim.id}": df,
-                f"Not {dim.id}": df,
-            }
+            raise ValueError(f"Unknown dimension kind: {dim.kind}")
 
         # Compute metric for each group
         result_by_group: dict[str, Any] = {}
         base_sizes: dict[str, int] = {}
 
         if isinstance(groups, pd.core.groupby.DataFrameGroupBy):
+            # Question dimension groups
             for group_val, group_df in groups:
                 series = group_df[col_name]
                 base_n = int(series.notna().sum())
@@ -260,7 +313,7 @@ class Executor:
                     cut.metric.type, series, question, cut.metric.params
                 )
         else:
-            # Dict-based groups (for segments)
+            # Dict-based groups (for segments or custom groupings)
             for group_val, group_df in groups.items():
                 series = group_df[col_name]
                 base_n = int(series.notna().sum())
@@ -307,8 +360,6 @@ class Executor:
         result.set_dataframe(pd.DataFrame(df_rows))
         
         return result
-
-
 
     def _compute_metric_value(
         self,
