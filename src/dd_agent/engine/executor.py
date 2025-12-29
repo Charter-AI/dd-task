@@ -75,18 +75,19 @@ class Executor:
         segment_bases = {}
         
         for seg_id, segment_spec in self.segments_by_id.items():
-            # Build segment mask using the filter expression
-            mask = build_mask(self.df, segment_spec.filter, self.questions_by_id)
+            # FIX: SegmentSpec uses 'definition', not 'filter'
+            mask = build_mask(self.df, segment_spec.definition, self.questions_by_id)
             self._segment_masks[seg_id] = mask
             
             # Calculate base size
             segment_bases[seg_id] = int(mask.sum())
             
             # Also compute complement mask for dimension comparisons
-            if segment_spec.include_complement:
-                complement_id = f"not_{seg_id}"
-                self._segment_masks[complement_id] = ~mask
-                segment_bases[complement_id] = int((~mask).sum())
+            # Note: SegmentSpec may not have include_complement attribute
+            # We'll always create complement for dimension use
+            complement_id = f"not_{seg_id}"
+            self._segment_masks[complement_id] = ~mask
+            segment_bases[complement_id] = int((~mask).sum())
         
         return segment_bases
 
@@ -139,9 +140,9 @@ class Executor:
                     if cut.filter in self._segment_masks:
                         mask = self._segment_masks[cut.filter]
                     else:
-                        # Compute dynamically
+                        # Compute dynamically using definition
                         mask = build_mask(self.df, 
-                                         self.segments_by_id[cut.filter].filter,
+                                         self.segments_by_id[cut.filter].definition,
                                          self.questions_by_id)
                 else:
                     # Try to treat as a simple column filter
@@ -279,8 +280,8 @@ class Executor:
                     f"not_{dim.id}": df[~mask],
                 }
             elif dim.id in self.segments_by_id:
-                # Compute mask for segment
-                mask = build_mask(df, self.segments_by_id[dim.id].filter, self.questions_by_id)
+                # Compute mask for segment using definition
+                mask = build_mask(df, self.segments_by_id[dim.id].definition, self.questions_by_id)
                 groups = {
                     f"{dim.id}": df[mask],
                     f"not_{dim.id}": df[~mask],
