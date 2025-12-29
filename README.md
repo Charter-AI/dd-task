@@ -66,6 +66,9 @@ dd-agent autoplan --data data/demo
 
 # Validate your data directory
 dd-agent validate --data data/demo
+
+# Run interactive query
+dd-agent interactive --data data/demo
 ```
 
 ## 📁 Project Structure

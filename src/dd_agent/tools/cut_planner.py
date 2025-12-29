@@ -82,8 +82,22 @@ class CutPlanner(Tool):
             
             # 5. Process LLM response
             if not cut_plan.ok:
+                # Convert error dicts to ToolMessage objects
+                error_messages = []
+                for error_dict in cut_plan.errors:
+                    error_messages.append(ToolMessage(
+                        code=error_dict.get("code", "llm_error"),
+                        message=error_dict.get("message", "Unknown LLM error"),
+                        context=error_dict.get("context", {})
+                    ))
+                
                 return ToolOutput.failure(
-                    errors=[err("llm_failed", f"LLM failed to produce valid plan: {cut_plan.errors}")]
+                    errors=error_messages,
+                    trace={
+                        "prompt": ctx.prompt,
+                        "llm_response": cut_plan.model_dump(),
+                        "llm_trace": llm_trace
+                    }
                 )
             
             # 6. Check if user resolution is needed
@@ -107,12 +121,9 @@ class CutPlanner(Tool):
                     })
                 
                 # Return partial result requiring user input
-                return ToolOutput(
-                    ok=False,
-                    data=None,
-                    requires_user_input=True,
-                    user_input_prompt=f"Your request '{ctx.prompt}' could mean multiple things. Which one do you mean?",
-                    user_input_options=user_options,
+                return ToolOutput.partial_for_user_input(
+                    prompt=f"Your request '{ctx.prompt}' could mean multiple things. Which one do you mean?",
+                    options=user_options,
                     trace={
                         "prompt": ctx.prompt,
                         "ambiguity_options": [opt.model_dump() for opt in sorted_options],
@@ -138,8 +149,29 @@ class CutPlanner(Tool):
                 )
                 
                 if validation_errors:
+                    # Convert validation errors to ToolMessage format
+                    tool_errors = []
+                    for error_item in validation_errors:
+                        # Handle different error formats
+                        if isinstance(error_item, dict):
+                            tool_errors.append(ToolMessage(
+                                code=error_item.get("code", "validation_error"),
+                                message=error_item.get("message", "Validation failed"),
+                                context=error_item.get("context", {})
+                            ))
+                        elif isinstance(error_item, ToolMessage):
+                            tool_errors.append(error_item)
+                        else:
+                            # Fallback
+                            tool_errors.append(err("validation_error", str(error_item)))
+                    
                     return ToolOutput.failure(
-                        errors=validation_errors
+                        errors=tool_errors,
+                        trace={
+                            "prompt": ctx.prompt,
+                            "validation_errors": validation_errors,
+                            "llm_trace": llm_trace
+                        }
                     )
                 
                 return ToolOutput.success(
@@ -194,8 +226,8 @@ class CutPlanner(Tool):
             for s in ctx.segments:
                 segment_desc = f"- ID: {s.segment_id}, Name: '{s.name}'"
                 # Add filter description if available
-                if hasattr(s, 'filter') and s.filter:
-                    segment_desc += f", Filter: {s.filter}"
+                if hasattr(s, 'definition') and s.definition:
+                    segment_desc += f", Definition: {s.definition}"
                 segments_info.append(segment_desc)
             segments_str = "\nAvailable Segments:\n" + "\n".join(segments_info)
         
@@ -208,7 +240,7 @@ Here are the questions in the dataset:
 
 # Task
 Parse the user's natural language request into a CutSpec containing:
-1. metric: The metric to compute (MetricSpec object with 'type' and 'question_id')
+1. metric: The metric to compute (MetricSpec object with 'type', 'question_id', and 'params')
 2. dimensions: List of dimensions to group by (each dimension is an object with 'kind' and 'id')
 3. filter: Optional filter condition (can be null)
 
@@ -244,6 +276,7 @@ Key constraints:
 - 'top2box' and 'bottom2box' can ONLY be used with 'likert_1_5' or 'likert_1_7' questions
 - If user says "NPS", you MUST use the nps_0_10 question
 - If user says "top-2-box" or "top2box", find Likert questions
+- Always include 'params' field in MetricSpec (can be empty dict)
 
 ## 4. Dimension Matching
 - Find the question ID that best matches the user's description
@@ -269,7 +302,8 @@ You must return a CutPlanResult object with this exact structure:
         "cut_id": "suggested_id_here",
         "metric": {{
             "type": "metric_type",
-            "question_id": "QUESTION_ID"
+            "question_id": "QUESTION_ID",
+            "params": {{}}  # Always include params, can be empty or contain e.g. "top_values": [4, 5]
         }},
         "dimensions": [
             {{"kind": "question", "id": "QUESTION_ID"}}
@@ -326,7 +360,7 @@ Response: {{
     "ok": true,
     "cut": {{
         "cut_id": "cut_nps_by_region",
-        "metric": {{"type": "nps", "question_id": "Q_NPS"}},
+        "metric": {{"type": "nps", "question_id": "Q_NPS", "params": {{}}}},
         "dimensions": [{{"kind": "question", "id": "Q_REGION"}}],
         "filter": null
     }},
@@ -343,7 +377,7 @@ Response: {{
     "ok": true,
     "cut": {{
         "cut_id": "cut_top2box_sat_by_income",
-        "metric": {{"type": "top2box", "question_id": "Q_OVERALL_SAT"}},
+        "metric": {{"type": "top2box", "question_id": "Q_OVERALL_SAT", "params": {{"top_values": [4, 5]}}}},
         "dimensions": [{{"kind": "question", "id": "Q_INCOME"}}],
         "filter": null
     }},

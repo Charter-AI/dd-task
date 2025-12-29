@@ -1,0 +1,12 @@
+[
+  {
+    "intent_id": "intent_002",
+    "description": "Compare overall satisfaction across subscription plans to identify underperforming tiers",
+    "errors": []
+  },
+  {
+    "intent_id": "intent_003",
+    "description": "Correlate feature usage with overall satisfaction to identify features that drive satisfaction",
+    "errors": []
+  }
+]
