@@ -1,0 +1,24 @@
+{
+  "cut_id": "cut_nps_by_tenure",
+  "metric_type": "nps",
+  "question_id": "Q_NPS",
+  "result_data": {
+    "by_dimension": {
+      "long_term_customers": 62.07,
+      "not_long_term_customers": -29.03
+    },
+    "base_sizes": {
+      "long_term_customers": 29,
+      "not_long_term_customers": 31
+    }
+  },
+  "base_n": 60,
+  "dimensions": [
+    "segment:long_term_customers"
+  ],
+  "warnings": [
+    "Multi-dimension cross-tabs not fully supported. Using first dimension only. Ignored: ['new_customers']",
+    "[long_term_customers] Base size (29) is below minimum threshold (30). Results may not be statistically reliable.",
+    "[not_long_term_customers] Base size (31) is below recommended threshold (100). Interpret results with caution."
+  ]
+}

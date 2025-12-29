@@ -1,0 +1,166 @@
+{
+  "intents": [
+    {
+      "intent_id": "intent_001",
+      "description": "Analyze NPS by region to understand regional satisfaction differences",
+      "segments_needed": [],
+      "priority": 1
+    },
+    {
+      "intent_id": "intent_002",
+      "description": "Compare overall satisfaction across different subscription plans to identify if enterprise customers are more satisfied than free/basic users",
+      "segments_needed": [
+        "enterprise_customers",
+        "free_basic_customers"
+      ],
+      "priority": 1
+    },
+    {
+      "intent_id": "intent_003",
+      "description": "Analyze correlation between feature usage and overall satisfaction to identify which features drive the highest satisfaction",
+      "segments_needed": [
+        "feature_users"
+      ],
+      "priority": 2
+    },
+    {
+      "intent_id": "intent_004",
+      "description": "Segment customers by tenure and analyze NPS and overall satisfaction to understand the satisfaction profile of long-term vs new customers",
+      "segments_needed": [
+        "long_term_customers",
+        "new_customers"
+      ],
+      "priority": 2
+    },
+    {
+      "intent_id": "intent_005",
+      "description": "Identify at-risk customers by analyzing low NPS and low purchase intent scores",
+      "segments_needed": [
+        "detractors",
+        "low_purchase_intent_customers"
+      ],
+      "priority": 1
+    }
+  ],
+  "rationale": "This analysis plan aims to provide a comprehensive understanding of customer satisfaction with the SaaS analytics platform. By examining Net Promoter Scores (NPS), overall satisfaction, and feature usage across different customer segments, we can identify key drivers of satisfaction and dissatisfaction. This will help prioritize product improvements and inform strategic decisions to enhance customer experience and retention. Additionally, understanding demographic and regional differences will allow targeted marketing and support strategies, ensuring we address the needs of underperforming segments and mitigate churn risks.",
+  "suggested_segments": [
+    {
+      "segment_id": "promoters",
+      "name": "Promoters",
+      "definition": {
+        "kind": "range",
+        "question_id": "Q_NPS",
+        "min": 9,
+        "max": 10,
+        "inclusive": true
+      },
+      "intended_partition": false,
+      "notes": "Customers who are highly likely to recommend (NPS 9-10)"
+    },
+    {
+      "segment_id": "detractors",
+      "name": "Detractors",
+      "definition": {
+        "kind": "range",
+        "question_id": "Q_NPS",
+        "min": 0,
+        "max": 6,
+        "inclusive": true
+      },
+      "intended_partition": false,
+      "notes": "Customers who are unlikely to recommend (NPS 0-6)"
+    },
+    {
+      "segment_id": "enterprise_customers",
+      "name": "Enterprise Customers",
+      "definition": {
+        "kind": "eq",
+        "question_id": "Q_PLAN",
+        "value": "ENT"
+      },
+      "intended_partition": false,
+      "notes": "Customers on the Enterprise plan"
+    },
+    {
+      "segment_id": "free_basic_customers",
+      "name": "Free/Basic Customers",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_PLAN",
+        "values": [
+          "FREE",
+          "BASIC"
+        ]
+      },
+      "intended_partition": false,
+      "notes": "Customers on Free or Basic plans"
+    },
+    {
+      "segment_id": "long_term_customers",
+      "name": "Long-term Customers",
+      "definition": {
+        "kind": "eq",
+        "question_id": "Q_TENURE",
+        "value": "LONG"
+      },
+      "intended_partition": false,
+      "notes": "Customers with tenure of 2+ years"
+    },
+    {
+      "segment_id": "new_customers",
+      "name": "New Customers",
+      "definition": {
+        "kind": "eq",
+        "question_id": "Q_TENURE",
+        "value": "NEW"
+      },
+      "intended_partition": false,
+      "notes": "Customers with tenure less than 6 months"
+    },
+    {
+      "segment_id": "feature_users",
+      "name": "Feature Users",
+      "definition": {
+        "kind": "contains_any",
+        "question_id": "Q_FEATURES_USED",
+        "values": [
+          "DASH",
+          "REPORT",
+          "EXPORT",
+          "API",
+          "MOBILE",
+          "COLLAB"
+        ]
+      },
+      "intended_partition": false,
+      "notes": "Customers who have used any features"
+    },
+    {
+      "segment_id": "low_purchase_intent_customers",
+      "name": "Low Purchase Intent Customers",
+      "definition": {
+        "kind": "range",
+        "question_id": "Q_PURCHASE_INTENT",
+        "min": 1,
+        "max": 2,
+        "inclusive": true
+      },
+      "intended_partition": false,
+      "notes": "Customers unlikely to purchase again (Purchase Intent 1-2)"
+    },
+    {
+      "segment_id": "high_income_customers",
+      "name": "High Income Customers",
+      "definition": {
+        "kind": "in",
+        "question_id": "Q_INCOME",
+        "values": [
+          "HIGH",
+          "VHIGH"
+        ]
+      },
+      "intended_partition": false,
+      "notes": "Customers with high annual household income"
+    }
+  ]
+}

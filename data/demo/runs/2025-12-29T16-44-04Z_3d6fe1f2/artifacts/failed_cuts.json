@@ -1,0 +1,12 @@
+[
+  {
+    "intent_id": "intent_002",
+    "description": "Compare overall satisfaction across subscription plans to identify which plan types have higher satisfaction levels",
+    "errors": []
+  },
+  {
+    "intent_id": "intent_003",
+    "description": "Analyze correlation between feature usage and overall satisfaction to determine which features drive satisfaction",
+    "errors": []
+  }
+]
