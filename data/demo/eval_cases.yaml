@@ -1,0 +1,170 @@
+# Evaluation Cases for DD Analytics Agent
+
+# Each case tests a specific capability of the agent
+# Executor tests can be run without LLM (deterministic)
+# Planner tests require LLM or mock responses
+
+---
+# Case 1: Simple NPS Calculation
+- name: "nps_overall"
+  type: "executor"
+  description: "Calculate overall NPS score"
+  input:
+    cut_spec:
+      cut_id: "test_nps_overall"
+      metric:
+        type: "nps"
+        question_id: "Q_NPS"
+        params: {}
+      dimensions: []
+      filter: null
+  expected:
+    nps_range: [40, 60]  # Expected NPS to be in this range
+    base_n_min: 50
+
+---
+# Case 2: Frequency Distribution
+- name: "region_frequency"
+  type: "executor"
+  description: "Get frequency distribution of regions"
+  input:
+    cut_spec:
+      cut_id: "test_region_freq"
+      metric:
+        type: "frequency"
+        question_id: "Q_REGION"
+        params: {}
+      dimensions: []
+      filter: null
+  expected:
+    categories: ["NORTH", "SOUTH", "EAST", "WEST", "CENTRAL"]
+    total_percentage: 100
+
+---
+# Case 3: Mean Calculation
+- name: "satisfaction_mean"
+  type: "executor"
+  description: "Calculate mean satisfaction score"
+  input:
+    cut_spec:
+      cut_id: "test_sat_mean"
+      metric:
+        type: "mean"
+        question_id: "Q_OVERALL_SAT"
+        params: {}
+      dimensions: []
+      filter: null
+  expected:
+    mean_range: [3.5, 4.5]
+    base_n_min: 50
+
+---
+# Case 4: Top 2 Box
+- name: "satisfaction_top2box"
+  type: "executor"
+  description: "Calculate top 2 box for satisfaction"
+  input:
+    cut_spec:
+      cut_id: "test_top2box"
+      metric:
+        type: "top2box"
+        question_id: "Q_OVERALL_SAT"
+        params: {}
+      dimensions: []
+      filter: null
+  expected:
+    percentage_range: [60, 85]
+
+---
+# Case 5: NPS by Dimension
+- name: "nps_by_region"
+  type: "executor"
+  description: "Calculate NPS score by region"
+  input:
+    cut_spec:
+      cut_id: "test_nps_region"
+      metric:
+        type: "nps"
+        question_id: "Q_NPS"
+        params: {}
+      dimensions:
+        - kind: "question"
+          id: "Q_REGION"
+      filter: null
+  expected:
+    dimensions_present: ["NORTH", "SOUTH", "EAST", "WEST", "CENTRAL"]
+
+---
+# Case 6: Filtered Analysis
+- name: "nps_enterprise_only"
+  type: "executor"
+  description: "Calculate NPS for enterprise customers only"
+  input:
+    cut_spec:
+      cut_id: "test_nps_enterprise"
+      metric:
+        type: "nps"
+        question_id: "Q_NPS"
+        params: {}
+      dimensions: []
+      filter:
+        kind: "eq"
+        question_id: "Q_PLAN"
+        value: "ENT"
+  expected:
+    nps_range: [70, 100]  # Enterprise customers should have high NPS
+    base_n_min: 10
+
+---
+# Case 7: Validation Error - Unknown Question
+- name: "validation_unknown_question"
+  type: "validation"
+  description: "Should fail validation with unknown question ID"
+  input:
+    cut_spec:
+      cut_id: "test_invalid"
+      metric:
+        type: "mean"
+        question_id: "Q_NONEXISTENT"
+        params: {}
+      dimensions: []
+      filter: null
+  expected:
+    validation_errors:
+      - code: "unknown_question"
+
+---
+# Case 8: Validation Error - Metric Incompatibility
+- name: "validation_metric_incompatible"
+  type: "validation"
+  description: "Should fail validation - NPS on non-NPS question"
+  input:
+    cut_spec:
+      cut_id: "test_invalid_metric"
+      metric:
+        type: "nps"
+        question_id: "Q_OVERALL_SAT"  # This is likert_1_5, not nps_0_10
+        params: {}
+      dimensions: []
+      filter: null
+  expected:
+    validation_errors:
+      - code: "metric_incompatible"
+
+---
+# Case 9: Multi-Choice Frequency
+- name: "features_frequency"
+  type: "executor"
+  description: "Get frequency of features used (multi-choice)"
+  input:
+    cut_spec:
+      cut_id: "test_features"
+      metric:
+        type: "frequency"
+        question_id: "Q_FEATURES_USED"
+        params: {}
+      dimensions: []
+      filter: null
+  expected:
+    # Percentages can exceed 100 for multi-choice (per-respondent basis)
+    categories_present: ["DASH", "REPORT"]

@@ -1,0 +1,37 @@
+[project]
+name = "dd-agent"
+version = "0.1.0"
+description = "DD Analytics Agent Skeleton - A production-grade agentic workflow for survey data analysis"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.0,<2",
+    "pydantic>=2.0,<3",
+    "pydantic-settings>=2.0,<3",
+    "pandas>=2.0,<3",
+    "typer>=0.9,<1",
+    "python-dotenv>=1.0,<2",
+    "rich>=13.0,<14",
+    "pyyaml>=6.0,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0,<9",
+    "pytest-cov>=4.0,<6",
+]
+
+[project.scripts]
+dd-agent = "dd_agent.cli:app"
+ascentra = "ascentra_agent.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dd_agent", "src/ascentra_agent"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
