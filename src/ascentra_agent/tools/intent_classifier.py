@@ -226,6 +226,17 @@ class IntentClassifier(Tool):
                 reasoning="Analysis pattern with 'by' dimension detected"
             )
         
+        # Special case: "satisfaction" is potentially ambiguous - route to cut_analysis
+        # so ambiguity detection in agent catches it
+        if 'satisfaction' in text or ' sat ' in text:
+            sat_questions = [q for q in questions if 'satisfaction' in q.label.lower() or 'sat' in q.label.lower()]
+            if len(sat_questions) > 1:
+                return UserIntent(
+                    intent_type="cut_analysis",
+                    confidence=0.75,
+                    reasoning="Satisfaction reference detected (potentially ambiguous)"
+                )
+        
         # Weak signal: analysis verb with potential question label tokens
         label_matches = [token for token in text.split() if token in question_labels]
         if has_analysis_verb and label_matches:

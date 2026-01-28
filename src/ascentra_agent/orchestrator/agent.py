@@ -1,7 +1,7 @@
 """Minimal Ascentra agent orchestrator (happy-path only)."""
 
 from __future__ import annotations
-
+import uuid
 from typing import Optional
 
 import pandas as pd
@@ -36,6 +36,7 @@ from ascentra_agent.tools.cut_planner import CutPlanner
 from ascentra_agent.tools.high_level_planner import HighLevelPlanner
 from ascentra_agent.tools.intent_classifier import IntentClassifier
 from ascentra_agent.tools.segment_builder import SegmentBuilder
+from ascentra_agent.contracts.trace import TurnTrace
 
 
 def _q_label(question_id: str, questions_by_id: dict[str, Question]) -> str:
@@ -147,6 +148,7 @@ class Agent:
         Happy-path only:
         - Trigger when a single token matches multiple questions ("satisfaction")
         - Trigger for "plan" if there is a plan-related question (command vs question collision)
+        BUT only for short, truly ambiguous inputs (not "create an analysis plan")
         - Provide up to 5 options
         """
         token = user_input.strip()
@@ -156,12 +158,23 @@ class Agent:
         t = token.lower().strip()
         tokens = t.split()
 
+        # Check if this is an explicit planning phrase (NOT ambiguous)
+        explicit_planning = any(phrase in t for phrase in [
+            'analysis plan', 'create an analysis', 'suggest a plan',
+            'plan the analysis', 'roadmap', 'plan for'
+        ])
+
         # For MVP, handle two patterns:
         # 1) single token ambiguity (e.g. "satisfaction")
-        # 2) "plan" collision in short inputs like "plan" or "analyze plan"
-        plan_collision = "plan" in tokens and any(
-            ("plan" in q.label.lower()) or (q.question_id.lower() == "q_plan")
-            for q in self.questions
+        # 2) "plan" collision in very short inputs like "plan" or "analyze plan"
+        
+        # Only trigger plan collision for SHORT inputs without explicit planning context
+        plan_collision = (
+            not explicit_planning and  # Not if explicitly about planning
+            len(tokens) <= 2 and       # Only very short inputs
+            "plan" in tokens and 
+            any(("plan" in q.label.lower()) or (q.question_id.lower() == "q_plan")
+                for q in self.questions)
         )
 
         single_token = len(tokens) == 1
@@ -333,30 +346,44 @@ class Agent:
 
     def handle_message(self, user_input: str) -> AgentResponse:
         """
-        Understand the message
+        Understand the message with full tracing
         """
+        # Create turn trace
+        turn_trace = TurnTrace(
+            turn_id=str(uuid.uuid4())[:8],
+            user_input=user_input
+        )
+        
         # Minimal clarification: if we have pending options, accept a numeric selection.
         text = user_input.strip()
         if self._pending_actions is not None:
+            turn_trace.add_event("pending_actions_check", has_pending=True)
             if text.isdigit():
                 idx = int(text)
                 if 1 <= idx <= len(self._pending_actions):
                     action = self._pending_actions[idx - 1]
                     self._pending_actions = None
+                    turn_trace.add_event("action_selected", 
+                                    action_id=action.option_id,
+                                    action_type=action.action_type)
+                    turn_trace.print_summary()  # Print before returning
                     return self._execute_action(action)
-                # Happy-path fallback: clear and continue normal routing.
                 self._pending_actions = None
             else:
-                # Any non-numeric follow-up cancels the clarification prompt.
                 self._pending_actions = None
 
+        # Check for clarification needed
         clarify = self._maybe_build_clarification(user_input)
         if clarify is not None:
+            turn_trace.add_event("clarification_triggered",
+                            num_options=len(clarify.options),
+                            reason="ambiguous_input")
             self._pending_actions = clarify.options
             lines = [clarify.question, "", "Please choose one:"]
             for i, opt in enumerate(clarify.options, 1):
                 lines.append(f"{i}) {opt.label}")
             lines.append("Reply with a number.")
+            turn_trace.print_summary()
             return AgentResponse(
                 intent=UserIntent(
                     intent_type="clarify",
@@ -368,8 +395,14 @@ class Agent:
                 clarify=clarify,
             )
 
+        # Intent classification
+        turn_trace.add_event("intent_classification_started")
         intent_out = self.intent_classifier.run(self._ctx(user_input))
+        
         if not intent_out.ok or intent_out.data is None:
+            turn_trace.add_event("intent_classification_failed",
+                            errors=[str(e) for e in intent_out.errors])
+            turn_trace.print_summary()
             return AgentResponse(
                 intent=UserIntent(intent_type="chat", confidence=0.0, reasoning="intent failed"),
                 success=False,
@@ -377,10 +410,20 @@ class Agent:
             )
 
         intent = intent_out.data
+        turn_trace.add_event("intent_classified",
+                        intent_type=intent.intent_type,
+                        confidence=intent.confidence,
+                        reasoning=intent.reasoning)
 
+        # High-level plan
         if intent.intent_type == "high_level_plan":
+            turn_trace.add_event("tool_called", tool="high_level_planner")
             plan_out = self.high_level_planner.run(self._ctx(user_input))
             if not plan_out.ok or plan_out.data is None:
+                turn_trace.add_event("tool_failed", 
+                                tool="high_level_planner",
+                                errors=[str(e) for e in plan_out.errors])
+                turn_trace.print_summary()
                 return AgentResponse(
                     intent=intent,
                     success=False,
@@ -388,16 +431,26 @@ class Agent:
                 )
 
             plan = plan_out.data
+            turn_trace.add_event("tool_success",
+                            tool="high_level_planner",
+                            num_intents=len(plan.intents))
             lines = ["Analysis plan:"]
             for i, item in enumerate(plan.intents[:20], 1):
                 lines.append(f"{i}. {item.description} (priority {item.priority})")
+            turn_trace.print_summary()
             return AgentResponse(intent=intent, success=True, message="\n".join(lines), data=plan)
 
+        # Segment definition
         if intent.intent_type == "segment_definition":
+            turn_trace.add_event("tool_called", tool="segment_builder")
             seg_out = self.segment_builder.run(self._ctx(user_input))
             if not seg_out.ok or seg_out.data is None:
                 error_messages = [e.message for e in seg_out.errors]
                 user_message = "I couldn't create that segment. " + " ".join(error_messages)
+                turn_trace.add_event("tool_failed",
+                                tool="segment_builder",
+                                errors=[str(e) for e in seg_out.errors])
+                turn_trace.print_summary()
                 return AgentResponse(
                     intent=intent,
                     success=False,
@@ -406,10 +459,12 @@ class Agent:
                 )
 
             seg = seg_out.data
-            self.segments = [s for s in self.segments if s.segment_id != seg.segment_id] + [
-                seg
-            ]
+            self.segments = [s for s in self.segments if s.segment_id != seg.segment_id] + [seg]
             self.segments_by_id[seg.segment_id] = seg
+            turn_trace.add_event("segment_created",
+                            segment_id=seg.segment_id,
+                            segment_name=seg.name)
+            turn_trace.print_summary()
             return AgentResponse(
                 intent=intent,
                 success=True,
@@ -417,20 +472,34 @@ class Agent:
                 data=seg,
             )
 
+        # Cut analysis
         if intent.intent_type == "cut_analysis":
+            # Ambiguity check
+            turn_trace.add_event("ambiguity_check_started")
             ambiguity_message = self._detect_cut_ambiguity(user_input)
             if ambiguity_message:
+                turn_trace.add_event("ambiguity_detected",
+                                reason="underspecified_or_ambiguous",
+                                message=ambiguity_message)
+                turn_trace.print_summary()
                 return AgentResponse(
                     intent=intent,
                     success=True,
                     message=ambiguity_message,
-                    errors=["ambiguous_request"]
+                    errors=[]
                 )
+            turn_trace.add_event("ambiguity_check_passed")
+            
+            # Call cut planner
+            turn_trace.add_event("tool_called", tool="cut_planner")
             cut_out = self.cut_planner.run(self._ctx(user_input))
             if not cut_out.ok or cut_out.data is None:
                 error_messages = [e.message for e in cut_out.errors]
                 user_message = "I couldn't complete your analysis request. " + " ".join(error_messages)
-        
+                turn_trace.add_event("tool_failed",
+                                tool="cut_planner",
+                                errors=[str(e) for e in cut_out.errors])
+                turn_trace.print_summary()
                 return AgentResponse(
                     intent=intent,
                     success=False,
@@ -439,6 +508,13 @@ class Agent:
                 )
 
             cut = cut_out.data
+            turn_trace.add_event("cut_spec_created",
+                            cut_id=cut.cut_id,
+                            metric=cut.metric.type,
+                            question=cut.metric.question_id)
+            
+            # Execute
+            turn_trace.add_event("execution_started")
             exec_result = Executor(
                 df=self.responses_df,
                 questions_by_id=self.questions_by_id,
@@ -446,23 +522,39 @@ class Agent:
             ).execute_cuts([cut])
 
             if exec_result.errors:
+                turn_trace.add_event("execution_failed",
+                                errors=[str(e) for e in exec_result.errors])
+                turn_trace.print_summary()
                 return AgentResponse(intent=intent, success=False, errors=[str(e) for e in exec_result.errors])
 
             table = exec_result.tables[0]
+            turn_trace.add_event("execution_success",
+                            base_n=table.base_n,
+                            num_rows=len(table.get_dataframe()) if table.get_dataframe() is not None else 0)
+            
             df = table.get_dataframe()
             cut_text = _format_cut_spec(cut, self.questions_by_id, self.segments_by_id)
             msg = f"{cut_text}\n\nBase N: {table.base_n}"
             if df is not None and not df.empty:
                 msg += "\n\n" + df.head(20).to_string(index=False)
+            turn_trace.print_summary()
             return AgentResponse(intent=intent, success=True, message=msg, data=exec_result)
 
+        # Chat fallback
+        turn_trace.add_event("tool_called", tool="chat_responder")
         chat_out = self.chat_responder.run(self._ctx(user_input))
         if not chat_out.ok or chat_out.data is None:
+            turn_trace.add_event("tool_failed",
+                            tool="chat_responder",
+                            errors=[str(e) for e in chat_out.errors])
+            turn_trace.print_summary()
             return AgentResponse(
                 intent=intent,
                 success=False,
                 errors=[f"{e.code}: {e.message}" for e in chat_out.errors],
             )
+        turn_trace.add_event("tool_success", tool="chat_responder")
+        turn_trace.print_summary()
         return AgentResponse(intent=intent, success=True, message=chat_out.data.message, data=chat_out.data)
     
     def _detect_cut_ambiguity(self, user_input: str) -> str | None:
