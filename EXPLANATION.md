@@ -561,21 +561,35 @@ All events captured with accurate timestamps and context.
 - User-facing explanations ("I asked because...")
 
 ---
+### Risk Mitigation: Dynamic Ambiguity Detection
+
+**Original Risk:**
+Hardcoded ambiguous terms dictionary didn't scale to new datasets.
+
+**Solution Implemented:**
+Created `_find_ambiguous_questions()` method that:
+- Searches all questions dynamically for matching terms
+- Checks question IDs, labels, and label words
+- Returns matches only if 2+ questions found
+- Works with any question catalog without code changes
+
+**Benefits:**
+- No manual maintenance required
+- Automatically handles new datasets
+- Discovers ambiguities we didn't anticipate
+- Scales to hundreds of questions
+
+**Example:**
+User: "analyze satisfaction"
+System: Searches all questions for "satisfaction"
+Finds: Q_OVERALL_SAT, Q_SUPPORT_SAT
+Returns: Clarification with both options
 
 ## Possible next steps
 
 ### Immediate (Next 2-4 Hours)
 
-**1. Dynamic Ambiguity Detection (1 hour)**
-Replace hardcoded dictionary:
-```python
-def find_ambiguous_questions(term, questions):
-    matches = [q for q in questions 
-               if term in q.label.lower() or term in q.question_id.lower()]
-    return matches if len(matches) > 1 else []
-```
-
-**2. Structured Logging to Files (1 hour)**
+**1. Structured Logging to Files (1 hour)**
 ```python
 logger = logging.getLogger(__name__)
 logger.info("intent_classified", extra={
@@ -585,7 +599,7 @@ logger.info("intent_classified", extra={
 })
 ```
 
-**3. CutSpec/SegmentSpec Validation (2 hours)**
+**2. CutSpec/SegmentSpec Validation (2 hours)**
 Move validation from executor to contracts:
 ```python
 class CutSpec:
@@ -706,7 +720,7 @@ class CutSpec:
 
 This implementation prioritizes **safety, trust, and reproducibility** - the core requirements for consultant-facing analytics systems.
 
-**Key Achievements:**
+**Key Points:**
 1. ✅ Accurate intent routing using question catalog grounding
 2. ✅ Proactive ambiguity detection that asks rather than guesses
 3. ✅ Graceful error handling with clear user communication

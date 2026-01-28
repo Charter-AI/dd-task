@@ -557,6 +557,72 @@ class Agent:
         turn_trace.print_summary()
         return AgentResponse(intent=intent, success=True, message=chat_out.data.message, data=chat_out.data)
     
+    def _find_ambiguous_questions(self, term: str) -> list[Question]:
+        """Dynamically find questions that match a term (potentially ambiguous).
+        
+        Args:
+            term: Search term from user input
+            
+        Returns:
+            List of matching questions (empty if 0 or 1 match)
+        """
+        term_lower = term.lower().strip()
+        matches = []
+        
+        for q in self.questions:
+            # Check question ID
+            if term_lower in q.question_id.lower():
+                matches.append(q)
+                continue
+            
+            # Check question label
+            if term_lower in q.label.lower():
+                matches.append(q)
+                continue
+            
+            # Check individual words in label
+            label_words = q.label.lower().split()
+            for word in label_words:
+                if term_lower in word or word in term_lower:
+                    matches.append(q)
+                    break
+        
+        # Only return if 2+ matches (ambiguous)
+        return matches if len(matches) > 1 else []
+    
+    def _find_ambiguous_questions(self, term: str) -> list[Question]:
+        """Dynamically find questions that match a term (potentially ambiguous).
+        
+        Args:
+            term: Search term from user input
+            
+        Returns:
+            List of matching questions (empty if 0 or 1 match)
+        """
+        term_lower = term.lower().strip()
+        matches = []
+        
+        for q in self.questions:
+            # Check question ID
+            if term_lower in q.question_id.lower():
+                matches.append(q)
+                continue
+            
+            # Check question label
+            if term_lower in q.label.lower():
+                matches.append(q)
+                continue
+            
+            # Check individual words in label
+            label_words = q.label.lower().split()
+            for word in label_words:
+                if term_lower in word or word in term_lower:
+                    matches.append(q)
+                    break
+        
+        # Only return if 2+ matches (ambiguous)
+        return matches if len(matches) > 1 else []
+    
     def _detect_cut_ambiguity(self, user_input: str) -> str | None:
         """Detect if a cut analysis request is ambiguous or underspecified.
         
@@ -571,13 +637,9 @@ class Agent:
             'break down by', 'breakdown by', 'split by'
         ]
         
-        # Check if it's ONLY a dimension (no metric/question mentioned)
         has_dimension_pattern = any(pattern in text for pattern in dimension_only_patterns)
-        
-        # Check if any question is mentioned
         has_question_reference = any(q.question_id.lower() in text for q in self.questions)
         
-        # Also check for metric keywords
         metric_keywords = ['nps', 'satisfaction', 'score', 'rating', 'frequency', 'count', 'mean', 'average']
         has_metric_keyword = any(keyword in text for keyword in metric_keywords)
         
@@ -587,25 +649,32 @@ class Agent:
                 "Please specify which question or metric you want to break down."
             )
         
-        # 2. Check for ambiguous question references (e.g., "satisfaction" matches multiple)
-        ambiguous_terms = {
-            'satisfaction': ['Q_OVERALL_SAT', 'Q_SUPPORT_SAT'],
-            'sat': ['Q_OVERALL_SAT', 'Q_SUPPORT_SAT'],
+        # 2. DYNAMIC ambiguous question detection
+        words = text.split()
+        skip_words = {
+            'the', 'and', 'or', 'by', 'for', 'to', 'in', 'on', 'at', 'is', 'a', 'an',
+            'show', 'analyze', 'display', 'create', 'make', 'get', 'find', 'see',
+            'me', 'my', 'you', 'your', 'how', 'what', 'when', 'where', 'which',
+            'breakdown', 'break', 'down'
         }
         
-        for term, question_ids in ambiguous_terms.items():
-            if term in text:
-                # Check if multiple matching questions exist
-                matching_questions = [q for q in self.questions if q.question_id in question_ids]
-                if len(matching_questions) > 1:
-                    question_list = '\n'.join([
-                        f"  - {q.label} ({q.question_id})" 
-                        for q in matching_questions
-                    ])
-                    return (
-                        f"'{term}' is ambiguous. Which question did you mean?\n{question_list}\n"
-                        "Please specify the question ID or full label."
-                    )
+        for word in words:
+            # Skip short words and common words
+            if len(word) <= 2 or word in skip_words:
+                continue
+            
+            # Find matching questions dynamically
+            ambiguous_questions = self._find_ambiguous_questions(word)
+            
+            if ambiguous_questions:
+                question_list = '\n'.join([
+                    f"  - {q.label} ({q.question_id})" 
+                    for q in ambiguous_questions
+                ])
+                return (
+                    f"'{word}' is ambiguous. Which question did you mean?\n{question_list}\n"
+                    "Please specify the question ID or full label."
+                )
         
         # 3. Check for vague analysis requests
         vague_patterns = [
@@ -621,5 +690,3 @@ class Agent:
             )
         
         return None
-
-

@@ -20,6 +20,8 @@ test_queries = [
     "hello",
     "show nps by region",
     "analyze satisfaction",  # Should ask for clarification
+    "analyze sat",  # Should also detect (short form)
+    "show support",  # Should detect Q_SUPPORT_SAT ambiguity if exists
     "plan",  # Should ask for clarification
     "break down by region",  # Should ask for clarification
     "show Q_NPS by Q_REGION",  # Should work
