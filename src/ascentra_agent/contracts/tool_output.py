@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Tool output envelope and message types (minimal)."""
 
 from typing import Any, Generic, Optional, TypeVar

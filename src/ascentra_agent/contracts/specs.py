@@ -1,4 +1,5 @@
 """Specification contracts for analysis definitions (minimal, happy-path)."""
+from __future__ import annotations
 
 from typing import Any, Literal, Optional
 

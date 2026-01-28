@@ -1,7 +1,7 @@
 """Question-related contracts."""
-
+from __future__ import annotations
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -21,7 +21,7 @@ class QuestionType(str, Enum):
 class Option(BaseModel):
     """A single option/choice for a question."""
 
-    code: str | int = Field(..., description="Unique code for this option")
+    code: Union[str, int] = Field(..., description="Unique code for this option")
     label: str = Field(..., description="Human-readable label for this option")
 
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Contracts package - Pydantic models for the Ascentra agent."""
 
 from ascentra_agent.contracts.questions import Option, Question, QuestionType
