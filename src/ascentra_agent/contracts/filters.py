@@ -1,7 +1,5 @@
 """Boolean expression AST for filter definitions (minimal, happy-path)."""
-
 from __future__ import annotations
-
 from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Field

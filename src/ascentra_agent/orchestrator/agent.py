@@ -332,6 +332,9 @@ class Agent:
         )
 
     def handle_message(self, user_input: str) -> AgentResponse:
+        """
+        Understand the message
+        """
         # Minimal clarification: if we have pending options, accept a numeric selection.
         text = user_input.strip()
         if self._pending_actions is not None:
@@ -393,9 +396,12 @@ class Agent:
         if intent.intent_type == "segment_definition":
             seg_out = self.segment_builder.run(self._ctx(user_input))
             if not seg_out.ok or seg_out.data is None:
+                error_messages = [e.message for e in seg_out.errors]
+                user_message = "I couldn't create that segment. " + " ".join(error_messages)
                 return AgentResponse(
                     intent=intent,
                     success=False,
+                    message=user_message,
                     errors=[f"{e.code}: {e.message}" for e in seg_out.errors],
                 )
 
@@ -412,11 +418,23 @@ class Agent:
             )
 
         if intent.intent_type == "cut_analysis":
+            ambiguity_message = self._detect_cut_ambiguity(user_input)
+            if ambiguity_message:
+                return AgentResponse(
+                    intent=intent,
+                    success=True,
+                    message=ambiguity_message,
+                    errors=["ambiguous_request"]
+                )
             cut_out = self.cut_planner.run(self._ctx(user_input))
             if not cut_out.ok or cut_out.data is None:
+                error_messages = [e.message for e in cut_out.errors]
+                user_message = "I couldn't complete your analysis request. " + " ".join(error_messages)
+        
                 return AgentResponse(
                     intent=intent,
                     success=False,
+                    message=user_message,
                     errors=[f"{e.code}: {e.message}" for e in cut_out.errors],
                 )
 
@@ -446,5 +464,70 @@ class Agent:
                 errors=[f"{e.code}: {e.message}" for e in chat_out.errors],
             )
         return AgentResponse(intent=intent, success=True, message=chat_out.data.message, data=chat_out.data)
+    
+    def _detect_cut_ambiguity(self, user_input: str) -> str | None:
+        """Detect if a cut analysis request is ambiguous or underspecified.
+        
+        Returns:
+            Clarification message if ambiguous, None if clear
+        """
+        text = user_input.lower().strip()
+        
+        # 1. Check for underspecified requests (dimension without metric)
+        dimension_only_patterns = [
+            'by region', 'by age', 'by gender', 'by income',
+            'break down by', 'breakdown by', 'split by'
+        ]
+        
+        # Check if it's ONLY a dimension (no metric/question mentioned)
+        has_dimension_pattern = any(pattern in text for pattern in dimension_only_patterns)
+        
+        # Check if any question is mentioned
+        has_question_reference = any(q.question_id.lower() in text for q in self.questions)
+        
+        # Also check for metric keywords
+        metric_keywords = ['nps', 'satisfaction', 'score', 'rating', 'frequency', 'count', 'mean', 'average']
+        has_metric_keyword = any(keyword in text for keyword in metric_keywords)
+        
+        if has_dimension_pattern and not has_question_reference and not has_metric_keyword:
+            return (
+                "Your request mentions a dimension but doesn't specify what metric to analyze. "
+                "Please specify which question or metric you want to break down."
+            )
+        
+        # 2. Check for ambiguous question references (e.g., "satisfaction" matches multiple)
+        ambiguous_terms = {
+            'satisfaction': ['Q_OVERALL_SAT', 'Q_SUPPORT_SAT'],
+            'sat': ['Q_OVERALL_SAT', 'Q_SUPPORT_SAT'],
+        }
+        
+        for term, question_ids in ambiguous_terms.items():
+            if term in text:
+                # Check if multiple matching questions exist
+                matching_questions = [q for q in self.questions if q.question_id in question_ids]
+                if len(matching_questions) > 1:
+                    question_list = '\n'.join([
+                        f"  - {q.label} ({q.question_id})" 
+                        for q in matching_questions
+                    ])
+                    return (
+                        f"'{term}' is ambiguous. Which question did you mean?\n{question_list}\n"
+                        "Please specify the question ID or full label."
+                    )
+        
+        # 3. Check for vague analysis requests
+        vague_patterns = [
+            'create a cut', 'run a cut', 'do an analysis',
+            'make a cut', 'perform analysis'
+        ]
+        
+        if any(pattern in text for pattern in vague_patterns):
+            return (
+                "Your request is too vague. Please specify:\n"
+                "  - Which question/metric to analyze\n"
+                "  - Optionally: which dimension to break it down by"
+            )
+        
+        return None
 
 

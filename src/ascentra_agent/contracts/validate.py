@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Domain validation helpers (kept minimal for MVP).
 
 Note: The Ascentra MVP intentionally avoids strict domain validation and
